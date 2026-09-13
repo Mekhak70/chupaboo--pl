@@ -1187,6 +1187,7 @@ if(creamType === "PLANTBASEDMILK") {
 
       {/* <CartDrawer
         isOpen={isCartOpen}
+        
         onClose={() =>
           setIsCartOpen(false)
         }
