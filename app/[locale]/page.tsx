@@ -938,7 +938,7 @@ ${type} ${creamType}։ ${t("imageLabel")} ${SITE_URL}${pendingImage.startsWith("
         </ScrollReveal>
 
         {/* ========== AVAILABLE PRODUCTS SECTION ========== */}
-        <section className="bg-white py-12 md:py-20 overflow-hidden">
+        {/* <section className="bg-white py-12 md:py-20 overflow-hidden">
           <div className="container mx-auto px-4">
             <ScrollReveal direction="up">
               <Link href={`/${locale}/available`}>
@@ -1026,7 +1026,6 @@ ${type} ${creamType}։ ${t("imageLabel")} ${SITE_URL}${pendingImage.startsWith("
           </div>
         </section>
 
-        {/* PARTY SHOP SECTION */}
         <section className="bg-gray-50 py-12 md:py-20 overflow-hidden">
           <div className="container mx-auto px-4">
             <ScrollReveal direction="up">
@@ -1131,7 +1130,7 @@ ${type} ${creamType}։ ${t("imageLabel")} ${SITE_URL}${pendingImage.startsWith("
               </div>
             </ScrollReveal>
           </div>
-        </section>
+        </section> */}
 
         {/* FAQ SECTION */}
         <section className="py-12 md:py-20 bg-gray-50">
