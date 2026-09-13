@@ -728,7 +728,7 @@ ${type} ${creamType}։ ${t("imageLabel")} ${SITE_URL}${pendingImage.startsWith("
         )}
 
         {/* Cart Drawer */}
-        <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} orderInfo={orderInfo} />
+        {/* <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} orderInfo={orderInfo} /> */}
 
         {/* ========== HERO SLIDER ========== */}
         <ScrollReveal direction="up" delay={0}>

@@ -888,11 +888,11 @@ export default function ShopPage() {
         </button>
 
         {/* ========== CART DRAWER ========== */}
-        <CartDrawer
+        {/* <CartDrawer
           isOpen={isCartOpen}
           onClose={() => setIsCartOpen(false)}
           orderInfo={orderInfo}
-        />
+        /> */}
 
         {/* ========== IMAGE MODAL ========== */}
         <ImageModal

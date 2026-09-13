@@ -1185,13 +1185,13 @@ if(creamType === "PLANTBASEDMILK") {
       {/* CART DRAWER */}
       {/* ================================================ */}
 
-      <CartDrawer
+      {/* <CartDrawer
         isOpen={isCartOpen}
         onClose={() =>
           setIsCartOpen(false)
         }
         orderInfo={orderInfo}
-      />
+      /> */}
     </main>
   );
 }

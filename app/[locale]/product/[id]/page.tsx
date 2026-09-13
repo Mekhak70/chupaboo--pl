@@ -744,11 +744,11 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       </button>
 
       {/* Cart Drawer */}
-      <CartDrawer
+      {/* <CartDrawer
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
         orderInfo={orderInfo}
-      />
+      /> */}
     </div>
   );
 }
