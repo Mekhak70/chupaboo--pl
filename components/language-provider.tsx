@@ -569,14 +569,48 @@ petNameLabel: {
     ru: "Ищете что-то особенное? Мы с удовольствием создадим торт на заказ для дней рождения и других праздников.",
     pl: "Szukasz czegoś wyjątkowego? Z przyjemnością tworzymy torty na zamówienie na urodziny, 'gotcha day' i inne okazje. Skontaktuj się z nami, aby omówić swoje pomysły!"
   },
-
+  customContactWelcome: {
+    hy: "Լրացրեք ձևը, և մենք կապ կհաստատենք Ձեզ հետ",
+    en: "Fill out the form and we'll get in touch with you",
+    ru: "Заполните форму, и мы свяжемся с вами",
+    pl: "Wypełnij formularz, a skontaktujemy się z Tobą"
+  },
+  workingHours: {
+    hy: "Աշխատանքային ժամեր",
+    en: "Working Hours",
+    ru: "Рабочие часы",
+    pl: "Godziny pracy"
+  },
   contactUs: {
     hy: "ԿԱՊ ՀԱՍՏԱՏԵՔ ՄԵԶ ՀԵՏ",
     en: "CONTACT US",
     ru: "СВЯЗАТЬСЯ",
     pl: "SKONTAKTUJ SIĘ Z NAMI"
   },
-
+  quickResponse: {
+    hy: "Արագ պատասխան",
+    en: "Quick Response",
+    ru: "Быстрый ответ",
+    pl: "Szybka odpowiedź"
+  }, 
+  quickResponseTime: {
+    hy: "15 րոպեում",
+    en: "Within 15 minutes",
+    ru: "В течение 15 минут",
+    pl: "W ciągu 15 minut"
+  },
+  yourOpinionMatters: {
+    hy: "Ձեր կարծիքը կարևոր է մեզ համար",
+    en: "Your opinion matters to us",
+    ru: "Ваше мнение важно для нас",
+    pl: "Twoja opinia jest dla nas ważna"
+  },
+  showRoute: {
+    hy: "Ցույց տալ երթուղին",
+    en: "Show Route",
+    ru: "Показать маршрут",
+    pl: "Pokaż trasę"
+  },
   // Contact
   contactTitle: {
     hy: "ԿԱՊ ՀԱՍՏԱՏԵՔ ՄԵԶ ՀԵՏ",
