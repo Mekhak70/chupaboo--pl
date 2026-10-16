@@ -1176,10 +1176,6 @@ ${type} ${creamType}։ ${t("imageLabel")} ${SITE_URL}${pendingImage.startsWith("
                     </div>
                   </div>
                 </StaggerItem>
-              </div>
-
-              {/* Մեջտեղի շարքը - 1 հատ (կենտրոնում) */}
-              <div className="flex justify-center">
                 <StaggerItem className="w-full max-w-2xl">
                   <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#69429a]/30 group">
                     <div className="flex items-start gap-3 md:gap-5">
@@ -1195,6 +1191,11 @@ ${type} ${creamType}։ ${t("imageLabel")} ${SITE_URL}${pendingImage.startsWith("
                     </div>
                   </div>
                 </StaggerItem>
+              </div>
+
+              {/* Մեջտեղի շարքը - 1 հատ (կենտրոնում) */}
+              <div className="flex justify-center">
+                
               </div>
 
               {/* Ներքևի շարքը - 2 հատ */}

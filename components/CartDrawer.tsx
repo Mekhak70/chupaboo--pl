@@ -1380,7 +1380,7 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
                 transition={{ delay: 0.1 }}
                 className="border-t p-4 space-y-3 bg-gray-50"
               >
-                {hasCakeInCart && discountInfo && discountInfo.discountPercent > 0 && (
+                {/* {hasCakeInCart && discountInfo && discountInfo.discountPercent > 0 && (
                   <div className="bg-green-50 border border-green-200 rounded-lg p-2 text-center">
                     <p className="text-xs text-green-700">
                       🎉 {discountInfo.discountPercent}% {t('discountOnPartyShop') || 'զեղչ PartyShop-ի համար'}
@@ -1389,87 +1389,87 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
                         : ` (10000+ ${t('currency')})`}
                     </p>
                   </div>
-                )}
+                )} */}
 
-                
-<div className="space-y-3">
-  {/* Pickup address */}
-  <div className="flex items-start gap-3 rounded-xl border border-[#69429a]/15 bg-[#69429a]/5 p-3">
-  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#69429a]/10">
-    <MapPin size={18} className="text-[#69429a]" />
-  </div>
 
-  <div className="min-w-0 flex-1">
-    <p className="text-xs font-semibold text-gray-800">
-      {t('pickupLocationTitle')}
-    </p>
+                <div className="space-y-3">
+                  {/* Pickup address */}
+                  <div className="flex items-start gap-3 rounded-xl border border-[#69429a]/15 bg-[#69429a]/5 p-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#69429a]/10">
+                      <MapPin size={18} className="text-[#69429a]" />
+                    </div>
 
-    <a
-      href="https://www.google.com/maps/search/?api=1&query=Odkryta%2015%2C%2003-140%20Warszawa%2C%20Poland"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="mt-1 inline-block text-xs leading-relaxed text-[#69429a] underline decoration-[#69429a]/40 underline-offset-2 hover:text-[#513078] transition-colors"
-    >
-      Odkryta 15, 03-140 Warszawa, Poland
-      <ExternalLink size={12} className="ml-1 inline-block" />
-    </a>
-  </div>
-</div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-semibold text-gray-800">
+                        {t('pickupLocationTitle')}
+                      </p>
 
-  {/* Price details */}
-  <div className="space-y-2.5 px-1">
-    <div className="flex justify-between items-center text-sm">
-      <span className="text-gray-600">{t('subtotal')}</span>
-      <span className="font-medium text-gray-800">
-        {productsTotal} {t('currency')}
-      </span>
-    </div>
+                      <a
+                        href="https://www.google.com/maps/search/?api=1&query=Odkryta%2015%2C%2003-140%20Warszawa%2C%20Poland"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="mt-1 inline-block text-xs leading-relaxed text-[#69429a] underline decoration-[#69429a]/40 underline-offset-2 hover:text-[#513078] transition-colors"
+                      >
+                        Odkryta 15, 03-140 Warszawa, Poland
+                        <ExternalLink size={12} className="ml-1 inline-block" />
+                      </a>
+                    </div>
+                  </div>
 
-    {discountInfo && discountInfo.discountPercent > 0 && (
-      <div className="flex justify-between items-center text-sm">
-        <span className="text-green-600">
-          {t('discount') || "Զեղչ"}
-        </span>
-        <span className="font-semibold text-green-600">
-          -{discountInfo.totalDiscount.toFixed(0)} {t('currency')} ({discountInfo.discountPercent}%)
-        </span>
-      </div>
-    )}
+                  {/* Price details */}
+                  <div className="space-y-2.5 px-1">
+                    {/* <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-600">{t('subtotal')}</span>
+                      <span className="font-medium text-gray-800">
+                        {productsTotal} {t('currency')}
+                      </span>
+                    </div> */}
 
-    {tempOrderInfo.deliveryOption === "delivery" &&
-      tempOrderInfo.deliveryFee > 0 && (
-        <div className="flex justify-between items-center text-sm">
-          <span className="text-gray-600">{t('deliveryFee')}</span>
-          <span className="font-medium text-gray-800">
-            {tempOrderInfo.deliveryFee} {t('currency')}
-          </span>
-        </div>
-      )}
+                    {/* {discountInfo && discountInfo.discountPercent > 0 && (
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-green-600">
+                          {t('discount') || "Զեղչ"}
+                        </span>
+                        <span className="font-semibold text-green-600">
+                          -{discountInfo.totalDiscount.toFixed(0)} {t('currency')} ({discountInfo.discountPercent}%)
+                        </span>
+                      </div>
+                    )} */}
 
-    {tempOrderInfo.deliveryOption === "delivery" &&
-      tempOrderInfo.deliveryFee === 0 &&
-      productsTotal >= FREE_DELIVERY_THRESHOLD && (
-        <div className="flex justify-between items-center text-sm">
-          <span className="text-gray-600">{t('deliveryFee')}</span>
-          <span className="font-semibold text-green-600">
-            {t('free')}
-          </span>
-        </div>
-      )}
-  </div>
+                    {/* {tempOrderInfo.deliveryOption === "delivery" &&
+                      tempOrderInfo.deliveryFee > 0 && (
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-gray-600">{t('deliveryFee')}</span>
+                          <span className="font-medium text-gray-800">
+                            {tempOrderInfo.deliveryFee} {t('currency')}
+                          </span>
+                        </div>
+                      )} */}
 
-  {/* Total */}
-  <div className="border-t border-gray-200 pt-3 mt-3">
-    <div className="flex justify-between items-center rounded-xl bg-gray-50 px-3 py-3">
-      <span className="font-semibold text-gray-700">
-        {t('total')}
-      </span>
-      <span className="text-2xl font-bold text-[#69429a]">
-        {effectiveTotal} {t('currency')}
-      </span>
-    </div>
-  </div>
-</div>
+                    {/* {tempOrderInfo.deliveryOption === "delivery" &&
+                      tempOrderInfo.deliveryFee === 0 &&
+                      productsTotal >= FREE_DELIVERY_THRESHOLD && (
+                        <div className="flex justify-between items-center text-sm">
+                          <span className="text-gray-600">{t('deliveryFee')}</span>
+                          <span className="font-semibold text-green-600">
+                            {t('free')}
+                          </span>
+                        </div>
+                      )} */}
+                  </div>
+
+                  {/* Total */}
+                  <div className="border-t border-gray-200 pt-3 mt-3">
+                    <div className="flex justify-between items-center rounded-xl bg-gray-50 px-3 py-3">
+                      <span className="font-semibold text-gray-700">
+                        {t('total')}
+                      </span>
+                      <span className="text-2xl font-bold text-[#69429a]">
+                        {effectiveTotal} {t('currency')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
 
 
                 <motion.button
