@@ -260,24 +260,24 @@ export default function HomePage() {
   // ADS
   const ads: Ad[] = useMemo(
     () => [
-      {
-        id: 1,
-        title: "📢 Այստեղ կարող է լինել ձեր գովազդը #1",
-        description: "Հասեք 1000+ հաճախորդների ամեն օր",
-        ctaText: "Մանրամասն →",
-        ctaLink: `https://www.chupaboo.com/${locale}/contact`,
-        bgColor: "from-[#69429a] to-[#8b5fcf]",
-        icon: "📢",
-      },
-      {
-        id: 2,
-        title: "🚕 Pet Taxi - Հոգատար փոխադրում կենդանիների համար",
-        description: "Անվտանգ, հարմարավետ և սիրով: Երևանով և Հայաստանով:",
-        ctaText: "Պատվիրել →",
-        ctaLink: "https://pettaxi.am",
-        bgColor: "from-[#4a90e2] to-[#2c5aa0]",
-        icon: "🚕",
-      },
+      // {
+      //   id: 1,
+      //   title: "📢 Այստեղ կարող է լինել ձեր գովազդը #1",
+      //   description: "Հասեք 1000+ հաճախորդների ամեն օր",
+      //   ctaText: "Մանրամասն →",
+      //   ctaLink: `https://www.chupaboo.com/${locale}/contact`,
+      //   bgColor: "from-[#69429a] to-[#8b5fcf]",
+      //   icon: "📢",
+      // },
+      // {
+      //   id: 2,
+      //   title: "🚕 Pet Taxi - Հոգատար փոխադրում կենդանիների համար",
+      //   description: "Անվտանգ, հարմարավետ և սիրով: Երևանով և Հայաստանով:",
+      //   ctaText: "Պատվիրել →",
+      //   ctaLink: "https://pettaxi.am",
+      //   bgColor: "from-[#4a90e2] to-[#2c5aa0]",
+      //   icon: "🚕",
+      // },
 
     ],
     []
@@ -552,7 +552,7 @@ ${type} ${creamType}։ ${t("imageLabel")} ${SITE_URL}${pendingImage.startsWith("
           ),
   
           fetch(
-            "https://opensheet.elk.sh/1JuaojKVSs8Fe6_4e2nPdHg0WgFJxNkL-uQbbcyPP1b0/Sheet1"
+            "https://opensheet.elk.sh/1MWGxhTUXdrzb9HXG6AedHV1bPRWAFQWQVUuan_K-Df8/Sheet1"
           ),
   
           fetch(
@@ -728,7 +728,7 @@ ${type} ${creamType}։ ${t("imageLabel")} ${SITE_URL}${pendingImage.startsWith("
         )}
 
         {/* Cart Drawer */}
-        {/* <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} orderInfo={orderInfo} /> */}
+        <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
 
         {/* ========== HERO SLIDER ========== */}
         <ScrollReveal direction="up" delay={0}>
@@ -1145,7 +1145,7 @@ ${type} ${creamType}։ ${t("imageLabel")} ${SITE_URL}${pendingImage.startsWith("
             <StaggerContainer className="flex flex-col gap-5 md:gap-8 max-w-5xl mx-auto">
               {/* Վերևի շարքը - 2 հատ */}
               <div className="grid md:grid-cols-2 gap-5 md:gap-8">
-                <StaggerItem>
+                {/* <StaggerItem>
                   <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#69429a]/30 group">
                     <div className="flex items-start gap-3 md:gap-5">
                       <div className="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#69429a]/10 flex items-center justify-center text-xl md:text-2xl group-hover:bg-[#69429a] group-hover:text-white transition-all duration-300">
@@ -1159,7 +1159,7 @@ ${type} ${creamType}։ ${t("imageLabel")} ${SITE_URL}${pendingImage.startsWith("
                       </div>
                     </div>
                   </div>
-                </StaggerItem>
+                </StaggerItem> */}
 
                 <StaggerItem>
                   <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#69429a]/30 group">

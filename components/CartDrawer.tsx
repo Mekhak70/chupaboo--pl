@@ -1,6 +1,6 @@
 "use client";
 
-import { X, Minus, Plus, Trash2, ChevronDown, ChevronUp, Info, Truck, MapPin, Phone, Calendar, Clock, CreditCard, Home } from "lucide-react";
+import { X, Minus, Plus, Trash2, ChevronDown, ChevronUp, Info, Truck, MapPin, Phone, Calendar, Clock, CreditCard, Home, ExternalLink } from "lucide-react";
 import { useCart } from "@/components/cart-context";
 import { useLanguage } from "@/components/language-provider";
 import { motion, AnimatePresence } from "framer-motion";
@@ -482,9 +482,9 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
 
     if (info.deliveryDate) {
       const formattedDate = info.deliveryDate.split("-").reverse().join(".");
-      details.push({ emoji: "📅", label: t('deliveryDate') || "Առաքման ամսաթիվ", value: formattedDate });
+      details.push({ emoji: "📅", label: t('pickupDate') || "Առաքման ամսաթիվ", value: formattedDate });
     } else {
-      details.push({ emoji: "📅", label: t('deliveryDate') || "Առաքման ամսաթիվ", value: t('notSpecified') || "նշված չէ" });
+      details.push({ emoji: "📅", label: t('pickupDate') || "Առաքման ամսաթիվ", value: t('notSpecified') || "նշված չէ" });
     }
 
     if (info.deliveryTime && info.deliveryTime.trim()) {
@@ -569,7 +569,7 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
 
   const buildOrderMessage = (platform: 'whatsapp' | 'telegram') => {
     let message = `${t('greeting')}\n\n`;
-    message +=available ? `*${t('available') || "Առկա"}*\n` : `*${t('products') || "Ապրանքներ"}*\n`;
+    message += available ? `*${t('available') || "Առկա"}*\n` : `*${t('products') || "Ապրանքներ"}*\n`;
 
     cart.forEach((item) => {
       const isCake = !!item.options?.cakeType;
@@ -652,24 +652,24 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
     message += buildProductImagesLinks();
 
     if (tempOrderInfo && tempOrderInfo.phoneNumber) {
-      message += `\n🚚 *${t('deliveryDetails') || "ԱՌԱՔՄԱՆ ՏՎՅԱԼՆԵՐ"}*\n`;
+      message += `\n🚚 *${t('customerDetails') || "հԱՃԱԽՈՐԴԻ ՏՎՅԱԼՆԵՐ"}*\n`;
       message += `▸ 📞 ${t('phone') || "Հեռախոս"}: ${tempOrderInfo.phoneNumber || t('notSpecified') || "նշված չէ"}\n`;
-      const deliveryOptMap: Record<string, string> = {
-        delivery: t('delivery') || "Առաքում",
-        pickup: t('pickup') || "Տեղում վերցնել",
-      };
-      message += `▸ 🚚 ${t('deliveryOption') || "Առաքման տարբերակ"}: ${deliveryOptMap[tempOrderInfo.deliveryOption] || tempOrderInfo.deliveryOption}\n`;
+      // const deliveryOptMap: Record<string, string> = {
+      //   delivery: t('delivery') || "Առաքում",
+      //   pickup: t('pickup') || "Տեղում վերցնել",
+      // };
+      // message += `▸ 🚚 ${t('deliveryOption') || "Առաքման տարբերակ"}: ${deliveryOptMap[tempOrderInfo.deliveryOption] || tempOrderInfo.deliveryOption}\n`;
 
-      if (tempOrderInfo.deliveryOption === "delivery") {
-        message += `▸ 📍 ${t('deliveryAddress') || "Հասցե"}: ${tempOrderInfo.deliveryAddress || t('notSpecified') || "նշված չէ"}\n`;
-        if (tempOrderInfo.deliveryFee > 0) {
-          message += `▸ 💰 ${t('deliveryFee') || "Առաքման վճար"}: ${tempOrderInfo.deliveryFee} ${t('currency')}\n`;
-        } else if (tempOrderInfo.deliveryFee === 0 && productsTotal >= FREE_DELIVERY_THRESHOLD) {
-          message += `▸ 💰 ${t('deliveryFee') || "Առաքման վճար"}: ${t('free') || "Անվճար"}\n`;
-        }
-      } else {
-        message += `▸ 🏠 ${t('pickupAddress') || "Վերցման կետ"}: ${PICKUP_ADDRESS}\n`;
-      }
+      // if (tempOrderInfo.deliveryOption === "delivery") {
+      //   message += `▸ 📍 ${t('deliveryAddress') || "Հասցե"}: ${tempOrderInfo.deliveryAddress || t('notSpecified') || "նշված չէ"}\n`;
+      //   if (tempOrderInfo.deliveryFee > 0) {
+      //     message += `▸ 💰 ${t('deliveryFee') || "Առաքման վճար"}: ${tempOrderInfo.deliveryFee} ${t('currency')}\n`;
+      //   } else if (tempOrderInfo.deliveryFee === 0 && productsTotal >= FREE_DELIVERY_THRESHOLD) {
+      //     message += `▸ 💰 ${t('deliveryFee') || "Առաքման վճար"}: ${t('free') || "Անվճար"}\n`;
+      //   }
+      // } else {
+      //   message += `▸ 🏠 ${t('pickupAddress') || "Վերցման կետ"}: ${PICKUP_ADDRESS}\n`;
+      // }
 
       message += `▸ 📅 ${t('deliveryDate') || "Ամսաթիվ"}: ${tempOrderInfo.deliveryDate || t('notSpecified') || "նշված չէ"}\n`;
       message += `▸ ⏰ ${t('preferredDeliveryTime') || "Ժամ"}: ${tempOrderInfo.deliveryTime || t('notSpecified') || "նշված չէ"}\n`;
@@ -692,9 +692,9 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
   const handleOrderClick = () => {
     const isPhoneValid = tempOrderInfo.phoneNumber.trim() !== "";
     const isDateValid = tempOrderInfo.deliveryDate !== "";
-    const isAddressValid = tempOrderInfo.deliveryOption === "pickup" || tempOrderInfo.deliveryAddress.trim() !== "";
+    // const isAddressValid = tempOrderInfo.deliveryOption === "pickup" || tempOrderInfo.deliveryAddress.trim() !== "";
 
-    if (isPhoneValid && isDateValid && isAddressValid) {
+    if (isPhoneValid && isDateValid) {
       setShowMessengerSelector(true);
       setShowDeliveryForm(false);
     } else {
@@ -727,7 +727,7 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
     const info = tempOrderInfo;
     if (!info.phoneNumber.trim()) return false;
     if (!info.deliveryDate) return false;
-    if (info.deliveryOption === "delivery" && !info.deliveryAddress.trim()) return false;
+    // if (info.deliveryOption === "delivery" && !info.deliveryAddress.trim()) return false;
     return true;
   };
 
@@ -736,22 +736,22 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
   ) => {
     try {
       const orderId = `CH-${Date.now()}`;
-  
+
       const orderItems = cart.map((item) => {
         const isCake = !!item.options?.cakeType;
-  
+
         let finalPrice = item.price;
-  
+
         if (hasCakeInCart && !isCake && discountPercent > 0) {
           const discountAmount =
             finalPrice * (discountPercent / 100);
-  
+
           finalPrice = Math.max(
             0,
             finalPrice - discountAmount
           );
         }
-  
+
         return {
           id: item.id,
           name: item.name,
@@ -763,55 +763,55 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
           options: item.options || null,
         };
       });
-  
+
       const deliveryFee =
         tempOrderInfo.deliveryOption === "delivery"
           ? tempOrderInfo.deliveryFee
           : 0;
-  
+
       const total = productsTotal + deliveryFee;
-  
-      const order = {
-        id: orderId,
-        name: "",
-        phone: tempOrderInfo.phoneNumber,
-        address:
-          tempOrderInfo.deliveryOption === "delivery"
-            ? tempOrderInfo.deliveryAddress
-            : PICKUP_ADDRESS,
-        delivery_date: tempOrderInfo.deliveryDate,
-        delivery_time: tempOrderInfo.deliveryTime,
-        payment_method: tempOrderInfo.paymentMethod,
-        items: orderItems,
-        subtotal: productsTotal,
-        delivery_fee: deliveryFee,
-        total,
-        notes: `Order sent via ${platform}`,
-        status: "pending",
-      };
-  
+
+      // const order = {
+      //   id: orderId,
+      //   name: "",
+      //   phone: tempOrderInfo.phoneNumber,
+      //   address:
+      //     tempOrderInfo.deliveryOption === "delivery"
+      //       ? tempOrderInfo.deliveryAddress
+      //       : PICKUP_ADDRESS,
+      //   delivery_date: tempOrderInfo.deliveryDate,
+      //   delivery_time: tempOrderInfo.deliveryTime,
+      //   payment_method: tempOrderInfo.paymentMethod,
+      //   items: orderItems,
+      //   subtotal: productsTotal,
+      //   delivery_fee: deliveryFee,
+      //   total,
+      //   notes: `Order sent via ${platform}`,
+      //   status: "pending",
+      // };
+
       // Պահպանում ենք պատվերը Supabase-ում
-      const { error } = await supabase
-        .from("orders")
-        .insert(order)
-        .select()
-        .single();
-  
-      if (error) {
-        alert(
-          `Պատվերը չհաջողվեց պահպանել։\n${error.message}`
-        );
-        return;
-      }
-  
+      // const { error } = await supabase
+      //   .from("orders")
+      //   .insert(order)
+      //   .select()
+      //   .single();
+
+      // if (error) {
+      //   alert(
+      //     `Պատվերը չհաջողվեց պահպանել։\n${error.message}`
+      //   );
+      //   return;
+      // }
+
       // Ստեղծում ենք հաղորդագրությունը
       const message = buildOrderMessage(platform);
       const encodedMessage = encodeURIComponent(message);
-  
+
       const phoneNumber = "37433775750";
-  
+
       let messengerUrl = "";
-  
+
       if (platform === "whatsapp") {
         messengerUrl =
           `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
@@ -819,18 +819,18 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
         messengerUrl =
           `https://t.me/Chupaboo?text=${encodedMessage}`;
       }
-  
+
       // Փակում ենք modal-ը և մաքրում cart-ը
       setShowMessengerSelector(false);
       clearCart();
       onClose();
-  
+
       // Բացում ենք messenger-ը
       window.location.href = messengerUrl;
-  
+
     } catch (error) {
       console.error("Messenger redirect error:", error);
-  
+
       alert(
         "Պատվերի պահպանման ժամանակ սխալ տեղի ունեցավ։"
       );
@@ -1024,14 +1024,14 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
                             <div className="flex items-center justify-between flex-wrap gap-2">
                               <div className="flex items-center gap-2">
                                 <h3 className="font-semibold text-gray-800 text-sm">{item.name}</h3>
-                                {isCake && (
+                                {/* {isCake && (
                                   <span className="text-xs bg-gradient-to-r from-[#69429a] to-[#8b5cf6] text-white px-2 py-0.5 rounded-full">🎂 {t('cake')}</span>
-                                )}
-                                {!isCake && discountPercentForItem > 0 && (
+                                )} */}
+                                {/* {!isCake && discountPercentForItem > 0 && (
                                   <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
                                     🎉 -{discountPercentForItem}% {t('partyShopDiscount') || 'PartyShop'}
                                   </span>
-                                )}
+                                )} */}
                               </div>
                             </div>
 
@@ -1091,22 +1091,22 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
                                           </div>
                                         </div>
                                       )) : <div className="space-y-1.5 text-sm">
-                                      {item?.ingredient && (
-                                        <div>
-                                          <span className="font-medium">{t("ingredients")}:</span>{" "}
-                                          {item.ingredient
-                                            .split(",")
-                                            .map((ingredient: string) => t(ingredient.trim()))
-                                            .join(", ")}
-                                        </div>
-                                      )}
-                                    
-                                      {item.options?.creamType
-                                          &&<div>
-                                        <span className="font-medium">{t("creamType")}:</span>{" "}
-                                        { t(item.options.creamType) }
+                                        {item?.ingredient && (
+                                          <div>
+                                            <span className="font-medium">{t("ingredients")}:</span>{" "}
+                                            {item.ingredient
+                                              .split(",")
+                                              .map((ingredient: string) => t(ingredient.trim()))
+                                              .join(", ")}
+                                          </div>
+                                        )}
+
+                                        {item.options?.creamType
+                                          && <div>
+                                            <span className="font-medium">{t("creamType")}:</span>{" "}
+                                            {t(item.options.creamType)}
+                                          </div>}
                                       </div>}
-                                    </div>}
                                     </div>
                                   </div>
                                 </motion.div>
@@ -1123,7 +1123,7 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <Truck className="h-4 w-4 text-[#69429a]" />
-                          <h3 className="font-semibold text-gray-800 text-sm">{t('deliveryDetails')}</h3>
+                          <h3 className="font-semibold text-gray-800 text-sm">{t('customerDetails')}</h3>
                         </div>
                         <button
                           onClick={() => setIsDeliveryExpanded(!isDeliveryExpanded)}
@@ -1147,7 +1147,7 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
                             className="overflow-hidden"
                           >
                             <div className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border border-blue-100">
-                              <div className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-2">🚚 {t('deliveryDetail')}</div>
+                              {/* <div className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-2">🚚 {t('deliveryDetail')}</div> */}
                               <div className="space-y-1.5">
                                 {deliveryInfo.map((detail, i) => (
                                   <div key={i} className="flex items-start gap-2 text-xs">
@@ -1217,7 +1217,7 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
                         </div> */}
 
                         {/* Delivery Address */}
-                        {tempOrderInfo.deliveryOption === "delivery" && (
+                        {/* {tempOrderInfo.deliveryOption === "delivery" && (
                           <div>
                             <p className="text-lg font-semibold text-[#69429a] mb-3 flex items-center gap-2">
                               <MapPin className="w-5 h-5" />
@@ -1255,10 +1255,10 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
                                 )}
                               </div>
                             )}
-                          </div>
-                        )}
+                          </div> 
+                        )}*/}
 
-                        {tempOrderInfo.deliveryOption === "pickup" && (
+                        {/* {tempOrderInfo.deliveryOption === "pickup" && (
                           <div className="p-3 bg-green-50 rounded-lg border border-green-200">
                             <p className="text-sm text-green-800 flex items-center gap-2">
                               <Home className="w-4 h-4" />
@@ -1268,7 +1268,7 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
                               ℹ️ {t('pickupInstructions')}
                             </p>
                           </div>
-                        )}
+                        )} */}
 
                         {/* Phone Number */}
                         <div>
@@ -1290,7 +1290,7 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
                         <div>
                           <p className="text-lg font-semibold text-[#69429a] mb-3 flex items-center gap-2">
                             <Calendar className="w-5 h-5" />
-                            {t('deliveryDate')}
+                            {t('pickupDate')}
                           </p>
                           <input
                             type="date"
@@ -1391,36 +1391,86 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
                   </div>
                 )}
 
-                <div className="space-y-1">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-gray-600">{t('subtotal')}</span>
-                    <span className="font-medium">{productsTotal} {t('currency')}</span>
-                  </div>
-                  {discountInfo && discountInfo.discountPercent > 0 && (
-                    <div className="flex justify-between items-center text-sm text-green-600">
-                      <span>{t('discount') || "Զեղչ"}</span>
-                      <span>-{discountInfo.totalDiscount.toFixed(0)} {t('currency')} ({discountInfo.discountPercent}%)</span>
-                    </div>
-                  )}
-                  {tempOrderInfo.deliveryOption === "delivery" && tempOrderInfo.deliveryFee > 0 && (
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600">{t('deliveryFee')}</span>
-                      <span className="font-medium">{tempOrderInfo.deliveryFee} {t('currency')}</span>
-                    </div>
-                  )}
-                  {tempOrderInfo.deliveryOption === "delivery" && tempOrderInfo.deliveryFee === 0 && productsTotal >= FREE_DELIVERY_THRESHOLD && (
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600">{t('deliveryFee')}</span>
-                      <span className="font-medium text-green-600">{t('free')}</span>
-                    </div>
-                  )}
-                  <div className="border-t pt-2 mt-2">
-                    <div className="flex justify-between items-center">
-                      <span className="font-semibold text-gray-700">{t('total')}</span>
-                      <span className="text-2xl font-bold text-[#69429a]">{effectiveTotal} {t('currency')}</span>
-                    </div>
-                  </div>
-                </div>
+                
+<div className="space-y-3">
+  {/* Pickup address */}
+  <div className="flex items-start gap-3 rounded-xl border border-[#69429a]/15 bg-[#69429a]/5 p-3">
+  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#69429a]/10">
+    <MapPin size={18} className="text-[#69429a]" />
+  </div>
+
+  <div className="min-w-0 flex-1">
+    <p className="text-xs font-semibold text-gray-800">
+      {t('pickupLocationTitle')}
+    </p>
+
+    <a
+      href="https://www.google.com/maps/search/?api=1&query=Odkryta%2015%2C%2003-140%20Warszawa%2C%20Poland"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mt-1 inline-block text-xs leading-relaxed text-[#69429a] underline decoration-[#69429a]/40 underline-offset-2 hover:text-[#513078] transition-colors"
+    >
+      Odkryta 15, 03-140 Warszawa, Poland
+      <ExternalLink size={12} className="ml-1 inline-block" />
+    </a>
+  </div>
+</div>
+
+  {/* Price details */}
+  <div className="space-y-2.5 px-1">
+    <div className="flex justify-between items-center text-sm">
+      <span className="text-gray-600">{t('subtotal')}</span>
+      <span className="font-medium text-gray-800">
+        {productsTotal} {t('currency')}
+      </span>
+    </div>
+
+    {discountInfo && discountInfo.discountPercent > 0 && (
+      <div className="flex justify-between items-center text-sm">
+        <span className="text-green-600">
+          {t('discount') || "Զեղչ"}
+        </span>
+        <span className="font-semibold text-green-600">
+          -{discountInfo.totalDiscount.toFixed(0)} {t('currency')} ({discountInfo.discountPercent}%)
+        </span>
+      </div>
+    )}
+
+    {tempOrderInfo.deliveryOption === "delivery" &&
+      tempOrderInfo.deliveryFee > 0 && (
+        <div className="flex justify-between items-center text-sm">
+          <span className="text-gray-600">{t('deliveryFee')}</span>
+          <span className="font-medium text-gray-800">
+            {tempOrderInfo.deliveryFee} {t('currency')}
+          </span>
+        </div>
+      )}
+
+    {tempOrderInfo.deliveryOption === "delivery" &&
+      tempOrderInfo.deliveryFee === 0 &&
+      productsTotal >= FREE_DELIVERY_THRESHOLD && (
+        <div className="flex justify-between items-center text-sm">
+          <span className="text-gray-600">{t('deliveryFee')}</span>
+          <span className="font-semibold text-green-600">
+            {t('free')}
+          </span>
+        </div>
+      )}
+  </div>
+
+  {/* Total */}
+  <div className="border-t border-gray-200 pt-3 mt-3">
+    <div className="flex justify-between items-center rounded-xl bg-gray-50 px-3 py-3">
+      <span className="font-semibold text-gray-700">
+        {t('total')}
+      </span>
+      <span className="text-2xl font-bold text-[#69429a]">
+        {effectiveTotal} {t('currency')}
+      </span>
+    </div>
+  </div>
+</div>
+
 
                 <motion.button
                   whileHover={{ scale: 1.02 }}
@@ -1496,6 +1546,7 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
                           <span>{t('sendViaTelegram') || "Ուղարկել Telegram-ով"}</span>
                         </motion.button>
                       </div>
+
 
                       <button
                         onClick={() => setShowMessengerSelector(false)}

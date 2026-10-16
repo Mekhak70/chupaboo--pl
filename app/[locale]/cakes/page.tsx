@@ -165,7 +165,7 @@ export default function ShopPage() {
       try {
         setLoading(true);
         const res = await fetch(
-          "https://opensheet.elk.sh/1JuaojKVSs8Fe6_4e2nPdHg0WgFJxNkL-uQbbcyPP1b0/Sheet1"
+          "https://opensheet.elk.sh/1MWGxhTUXdrzb9HXG6AedHV1bPRWAFQWQVUuan_K-Df8/Sheet1"
         );
 
         if (!res.ok) {

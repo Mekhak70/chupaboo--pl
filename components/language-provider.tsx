@@ -429,10 +429,16 @@ enterPhoneNumber: {
 },
 
 deliveryDate: {
-  hy: "Առաքման ամսաթիվ",
-  en: "Delivery Date",
-  ru: "Дата доставки",
-  pl: "Data dostawy"
+  hy: "Պատվերը վերցնելու ամսաթիվը",
+  en: "Order pickup date",
+  ru: "Дата получения заказа",
+  pl: "Data odbioru zamówienia"
+},
+pickupDate: {
+  hy: "Պատվերը վերցնելու ամսաթիվը",
+  en: "Order pickup date",
+  ru: "Дата получения заказа",
+  pl: "Data odbioru zamówienia"
 },
 partyshop: {
   hy: "Փարթի Շոփ",
@@ -482,11 +488,17 @@ cash: {
   ru: "Наличные",
   pl: "Gotówka"
 },
+pickupLocationTitle: {
+  hy: "Պատվերը վերցնելու հասցե",
+  en: "Order Pickup Address",
+  ru: "Адрес получения заказа",
+  pl: "Adres odbioru zamówienia"
+},
 preferredDeliveryTime: {
-  hy: "Ընտրված առաքման ժամ",
-  en: "Preferred Delivery Time",
-  ru: "Предпочтительное время доставки",
-  pl: "Preferowany czas dostawy"
+  hy: "Պատվերը վերցնելու նախընտրելի ժամ",
+  en: "Preferred Pickup Time",
+  ru: "Предпочтительное время получения заказа",
+  pl: "Preferowana godzina odbioru zamówienia"
 },
 paymentMethod: {
   hy: "Վճարման եղանակ",
@@ -599,6 +611,7 @@ petNameLabel: {
     ru: "В течение 15 минут",
     pl: "W ciągu 15 minut"
   },
+
   yourOpinionMatters: {
     hy: "Ձեր կարծիքը կարևոր է մեզ համար",
     en: "Your opinion matters to us",
@@ -1188,6 +1201,12 @@ pieces: {
     en: "Delivery details",
     ru: "Данные доставки",
     pl: "Dane dostawy"
+  },
+  customerDetails: {
+    hy: "Հաճախորդի տվյալներ",
+    en: "Customer details",
+    ru: "Данные клиента",
+    pl: "Dane klienta"
   },
   close: {
     hy: "Փակել",

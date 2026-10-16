@@ -718,11 +718,11 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             {/* Add to Cart Button */}
             <button onClick={addToCartHandler} className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#69429a] text-white font-semibold rounded-xl hover:bg-[#aed137] transition-colors text-lg cursor-pointer">🛒 {t("addToCart") || "Add to Cart"}</button>
 
-            <p className="mt-2 text-gray-700 italic text-sm">
+            {/* <p className="mt-2 text-gray-700 italic text-sm">
               {orderInfo.deliveryOption === "delivery"
                 ? orderInfo.isYerevanAddress === false ? "" : price * quantity >= FREE_DELIVERY_THRESHOLD ? orderInfo.distance !== null && orderInfo.distance > FREE_DELIVERY_MAX_DISTANCE ? `🚚 ${FREE_DELIVERY_MAX_DISTANCE} km ${t("freeDelivery")}, ${t("extraDistanceCharged")}` : `🚚 ${t("freeDeliveryForOrdersAbove")}` : `🚚 ${t("deliveryFeeInfo")}`
                 : `🏠 ${t("pickupHint")}`}
-            </p>
+            </p> */}
 
             {/* Product Info */}
             <div className="bg-white rounded-xl p-6 shadow-sm">
@@ -744,11 +744,10 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       </button>
 
       {/* Cart Drawer */}
-      {/* <CartDrawer
+      <CartDrawer
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
-        orderInfo={orderInfo}
-      /> */}
+      />
     </div>
   );
 }

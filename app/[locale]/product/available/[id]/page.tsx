@@ -57,17 +57,7 @@ interface ProductOptions {
   ingredient?: string;
 }
 
-interface OrderInfo {
-  deliveryOption: DeliveryOption;
-  deliveryAddress: string;
-  deliveryDate: string;
-  deliveryTime: string;
-  paymentMethod: PaymentMethod;
-  phoneNumber: string;
-  deliveryFee: number;
-  distance: number | null;
-  isYerevanAddress: boolean | null;
-}
+
 
 // ======================================================
 // PLACEHOLDER
@@ -122,17 +112,6 @@ export default function ProductPage() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Order info
-  const [orderInfo] = useState<OrderInfo>({
-    deliveryOption: "delivery",
-    deliveryAddress: "",
-    deliveryDate: getTodayDate(),
-    deliveryTime: "",
-    paymentMethod: "cash",
-    phoneNumber: "",
-    deliveryFee: 0,
-    distance: null,
-    isYerevanAddress: null,
-  });
 
   const cartCount = getItemCount();
 
@@ -1185,14 +1164,13 @@ if(creamType === "PLANTBASEDMILK") {
       {/* CART DRAWER */}
       {/* ================================================ */}
 
-      {/* <CartDrawer
+      <CartDrawer
         isOpen={isCartOpen}
         
         onClose={() =>
           setIsCartOpen(false)
         }
-        orderInfo={orderInfo}
-      /> */}
+      />
     </main>
   );
 }
