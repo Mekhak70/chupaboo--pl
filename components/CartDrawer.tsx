@@ -129,6 +129,55 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
   const [showMessengerSelector, setShowMessengerSelector] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
 
+  // Convert AMD amounts for display only. Cart calculations remain in AMD.
+  const [plnRate, setPlnRate] = useState<number | null>(null);
+  const [ratesLoading, setRatesLoading] = useState(true);
+  const [ratesError, setRatesError] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+
+    async function loadExchangeRate() {
+      try {
+        setRatesLoading(true);
+        setRatesError(false);
+        const response = await fetch(
+          "https://api.frankfurter.dev/v2/rates?base=AMD&quotes=PLN",
+          { signal: controller.signal, cache: "no-store" }
+        );
+        if (!response.ok) throw new Error("Could not load PLN exchange rate");
+        const data: unknown = await response.json();
+        if (!Array.isArray(data)) throw new Error("Invalid exchange rate response");
+        const rate = data.find(
+          (item) => item.base === "AMD" && item.quote === "PLN" &&
+            Number.isFinite(item.rate) && item.rate > 0
+        )?.rate;
+        if (typeof rate !== "number") throw new Error("PLN exchange rate is missing");
+        if (!controller.signal.aborted) setPlnRate(rate);
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          console.error("Exchange rate error:", error);
+          setRatesError(true);
+        }
+      } finally {
+        if (!controller.signal.aborted) setRatesLoading(false);
+      }
+    }
+
+    void loadExchangeRate();
+    return () => controller.abort();
+  }, []);
+
+  const formatMoney = (amountAMD: number): string => {
+    if (plnRate === null) return ratesLoading ? "… zł" : "— zł";
+    return new Intl.NumberFormat("pl-PL", {
+      style: "currency",
+      currency: "PLN",
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amountAMD * plnRate);
+  };
+
   const existingOrderInfo = contextOrderInfo || propOrderInfo;
 
   console.log(cart, "cart");
@@ -512,7 +561,7 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
       details.push({
         emoji: "💰",
         label: t('deliveryFee') || "Առաքման վճար",
-        value: `${info.deliveryFee} ${t('currency')}`
+        value: `${formatMoney(info.deliveryFee)}`
       });
     } else if (info.deliveryOption === "delivery" && info.deliveryFee === 0 && productsTotal >= FREE_DELIVERY_THRESHOLD) {
       details.push({
@@ -580,7 +629,7 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
         finalPrice = Math.max(0, finalPrice - discountAmount);
       }
 
-      message += `▸ ${item.name} — ${item.quantity} ${t('quantity') || "հատ"} — ${finalPrice * item.quantity} ${t('currency')}\n`;
+      message += `▸ ${item.name} — ${item.quantity} ${t('quantity') || "հատ"} — ${formatMoney(finalPrice * item.quantity)}\n`;
       if (isCake && item.options) {
         if (item.options.cakeType) {
           const typeMap: Record<string, string> = {
@@ -663,7 +712,7 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
       // if (tempOrderInfo.deliveryOption === "delivery") {
       //   message += `▸ 📍 ${t('deliveryAddress') || "Հասցե"}: ${tempOrderInfo.deliveryAddress || t('notSpecified') || "նշված չէ"}\n`;
       //   if (tempOrderInfo.deliveryFee > 0) {
-      //     message += `▸ 💰 ${t('deliveryFee') || "Առաքման վճար"}: ${tempOrderInfo.deliveryFee} ${t('currency')}\n`;
+      //     message += `▸ 💰 ${t('deliveryFee') || "Առաքման վճար"}: ${formatMoney(tempOrderInfo.deliveryFee)}\n`;
       //   } else if (tempOrderInfo.deliveryFee === 0 && productsTotal >= FREE_DELIVERY_THRESHOLD) {
       //     message += `▸ 💰 ${t('deliveryFee') || "Առաքման վճար"}: ${t('free') || "Անվճար"}\n`;
       //   }
@@ -684,7 +733,7 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
 
     const totalWithDelivery = productsTotal + (tempOrderInfo.deliveryOption === "delivery" ? tempOrderInfo.deliveryFee : 0);
     message += "\n━━━━━━━━━━━━━━━━━━━━━\n";
-    message += `💰 ${t('total') || "ԸՆԴՀԱՆՈՒՐ"}: ${totalWithDelivery} ${t('currency')}\n`;
+    message += `💰 ${t('total') || "ԸՆԴՀԱՆՈՒՐ"}: ${formatMoney(totalWithDelivery)}\n`;
 
     return message;
   };
@@ -734,6 +783,8 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
   const redirectToMessenger = async (
     platform: "whatsapp" | "telegram"
   ) => {
+    if (plnRate === null) return;
+
     try {
       const orderId = `CH-${Date.now()}`;
 
@@ -771,38 +822,7 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
 
       const total = productsTotal + deliveryFee;
 
-      // const order = {
-      //   id: orderId,
-      //   name: "",
-      //   phone: tempOrderInfo.phoneNumber,
-      //   address:
-      //     tempOrderInfo.deliveryOption === "delivery"
-      //       ? tempOrderInfo.deliveryAddress
-      //       : PICKUP_ADDRESS,
-      //   delivery_date: tempOrderInfo.deliveryDate,
-      //   delivery_time: tempOrderInfo.deliveryTime,
-      //   payment_method: tempOrderInfo.paymentMethod,
-      //   items: orderItems,
-      //   subtotal: productsTotal,
-      //   delivery_fee: deliveryFee,
-      //   total,
-      //   notes: `Order sent via ${platform}`,
-      //   status: "pending",
-      // };
-
-      // Պահպանում ենք պատվերը Supabase-ում
-      // const { error } = await supabase
-      //   .from("orders")
-      //   .insert(order)
-      //   .select()
-      //   .single();
-
-      // if (error) {
-      //   alert(
-      //     `Պատվերը չհաջողվեց պահպանել։\n${error.message}`
-      //   );
-      //   return;
-      // }
+      
 
       // Ստեղծում ենք հաղորդագրությունը
       const message = buildOrderMessage(platform);
@@ -1024,25 +1044,18 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
                             <div className="flex items-center justify-between flex-wrap gap-2">
                               <div className="flex items-center gap-2">
                                 <h3 className="font-semibold text-gray-800 text-sm">{item.name}</h3>
-                                {/* {isCake && (
-                                  <span className="text-xs bg-gradient-to-r from-[#69429a] to-[#8b5cf6] text-white px-2 py-0.5 rounded-full">🎂 {t('cake')}</span>
-                                )} */}
-                                {/* {!isCake && discountPercentForItem > 0 && (
-                                  <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
-                                    🎉 -{discountPercentForItem}% {t('partyShopDiscount') || 'PartyShop'}
-                                  </span>
-                                )} */}
+                              
                               </div>
                             </div>
 
                             <div className="flex items-center gap-2 flex-wrap mt-1">
                               {!isCake && effectivePrice !== originalPrice && discountPercentForItem > 0 ? (
                                 <>
-                                  <span className="text-md font-bold text-green-600">{effectivePrice} {t('currency')}</span>
-                                  <span className="text-xs text-gray-400 line-through">{originalPrice} {t('currency')}</span>
+                                  <span className="text-md font-bold text-green-600">{formatMoney(effectivePrice)}</span>
+                                  <span className="text-xs text-gray-400 line-through">{formatMoney(originalPrice)}</span>
                                 </>
                               ) : (
-                                <span className="text-md font-bold text-[#69429a]">{effectivePrice} {t('currency')}</span>
+                                <span className="text-md font-bold text-[#69429a]">{formatMoney(effectivePrice)}</span>
                               )}
                             </div>
 
@@ -1188,89 +1201,7 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
                         exit={{ opacity: 0, y: 20 }}
                         className="space-y-5"
                       >
-                        {/* Delivery Option */}
-                        {/* <div>
-                          <p className="text-lg font-semibold text-[#69429a] mb-3 flex items-center gap-2">
-                            <Truck className="w-5 h-5" />
-                            {t('deliveryOption')}
-                          </p>
-                          <div className="flex flex-wrap gap-3">
-                            <button
-                              onClick={() => handleTempOrderChange("deliveryOption", "delivery")}
-                              className={`px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 border cursor-pointer transition-all ${tempOrderInfo.deliveryOption === "delivery"
-                                ? "bg-[#69429a] text-white border-[#69429a] shadow-md scale-105"
-                                : "bg-white text-[#69429a] border-[#69429a] hover:bg-purple-50"
-                                }`}
-                            >
-                              🚚 {t('delivery')}
-                            </button>
-                            <button
-                              onClick={() => handleTempOrderChange("deliveryOption", "pickup")}
-                              className={`px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 border cursor-pointer transition-all ${tempOrderInfo.deliveryOption === "pickup"
-                                ? "bg-[#10b981] text-white border-[#10b981] shadow-md scale-105"
-                                : "bg-white text-[#10b981] border-[#10b981] hover:bg-emerald-50"
-                                }`}
-                            >
-                              🏠 {t('pickup')}
-                            </button>
-                          </div>
-                        </div> */}
-
-                        {/* Delivery Address */}
-                        {/* {tempOrderInfo.deliveryOption === "delivery" && (
-                          <div>
-                            <p className="text-lg font-semibold text-[#69429a] mb-3 flex items-center gap-2">
-                              <MapPin className="w-5 h-5" />
-                              {t('deliveryAddress')}
-                            </p>
-                            <textarea
-                              value={tempOrderInfo.deliveryAddress}
-                              onChange={(e) => handleTempOrderChange("deliveryAddress", e.target.value)}
-                              placeholder={t('placeholder') || "քաղաք, փողոց, տուն"}
-                              rows={3}
-                              className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#69429a] focus:ring-1 focus:ring-[#69429a] resize-none border-gray-300"
-                              required
-                            />
-                            {tempOrderInfo.deliveryAddress && tempOrderInfo.deliveryAddress.trim().length > 5 && (
-                              <div className="mt-2">
-                                {tempOrderInfo.isCalculating ? (
-                                  <div className="p-2 bg-gray-50 rounded-lg">
-                                    <p className="text-xs text-gray-500">⏳ {t('calculatingDistance') || "Հաշվարկում ենք հեռավորությունը..."}</p>
-                                  </div>
-                                ) : tempOrderInfo.distance !== null && (
-                                  <div className="p-2 bg-blue-50 rounded-lg border border-blue-100">
-                                    <p className="text-xs text-blue-700">
-                                      🚚 {t('deliveryFee')}: {tempOrderInfo.deliveryFee} {t('currency')}
-                                      {tempOrderInfo.distance && (
-                                        <span className="text-gray-500 ml-1">(~{Math.round(tempOrderInfo.distance)} կմ)</span>
-                                      )}
-                                    </p>
-                                    {productsTotal >= FREE_DELIVERY_THRESHOLD && tempOrderInfo.distance <= FREE_DELIVERY_MAX_DISTANCE && (
-                                      <p className="text-xs text-green-600 mt-1">✅ {t('freeDeliveryForOrdersAbove')}</p>
-                                    )}
-                                    {productsTotal >= FREE_DELIVERY_THRESHOLD && tempOrderInfo.distance > FREE_DELIVERY_MAX_DISTANCE && (
-                                      <p className="text-xs text-orange-600 mt-1">⚠️ {t('freeDeliveryHint') || "10 կմ-ից ավելի, մասնակի վճար"}</p>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                            )}
-                          </div> 
-                        )}*/}
-
-                        {/* {tempOrderInfo.deliveryOption === "pickup" && (
-                          <div className="p-3 bg-green-50 rounded-lg border border-green-200">
-                            <p className="text-sm text-green-800 flex items-center gap-2">
-                              <Home className="w-4 h-4" />
-                              <span className="font-semibold">{t('pickupAddress')}:</span> {PICKUP_ADDRESS}
-                            </p>
-                            <p className="text-xs text-green-600 mt-1">
-                              ℹ️ {t('pickupInstructions')}
-                            </p>
-                          </div>
-                        )} */}
-
-                        {/* Phone Number */}
+                       
                         <div>
                           <p className="text-lg font-semibold text-[#69429a] mb-3 flex items-center gap-2">
                             <Phone className="w-5 h-5" />
@@ -1385,8 +1316,8 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
                     <p className="text-xs text-green-700">
                       🎉 {discountInfo.discountPercent}% {t('discountOnPartyShop') || 'զեղչ PartyShop-ի համար'}
                       {discountInfo.discountPercent === 10
-                        ? ` (5000-10000 ${t('currency')})`
-                        : ` (10000+ ${t('currency')})`}
+                        ? ` (${formatMoney(5000)}–${formatMoney(10000)})`
+                        : ` (${formatMoney(10000)}+)`}
                     </p>
                   </div>
                 )} */}
@@ -1418,44 +1349,7 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
 
                   {/* Price details */}
                   <div className="space-y-2.5 px-1">
-                    {/* <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-600">{t('subtotal')}</span>
-                      <span className="font-medium text-gray-800">
-                        {productsTotal} {t('currency')}
-                      </span>
-                    </div> */}
-
-                    {/* {discountInfo && discountInfo.discountPercent > 0 && (
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="text-green-600">
-                          {t('discount') || "Զեղչ"}
-                        </span>
-                        <span className="font-semibold text-green-600">
-                          -{discountInfo.totalDiscount.toFixed(0)} {t('currency')} ({discountInfo.discountPercent}%)
-                        </span>
-                      </div>
-                    )} */}
-
-                    {/* {tempOrderInfo.deliveryOption === "delivery" &&
-                      tempOrderInfo.deliveryFee > 0 && (
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="text-gray-600">{t('deliveryFee')}</span>
-                          <span className="font-medium text-gray-800">
-                            {tempOrderInfo.deliveryFee} {t('currency')}
-                          </span>
-                        </div>
-                      )} */}
-
-                    {/* {tempOrderInfo.deliveryOption === "delivery" &&
-                      tempOrderInfo.deliveryFee === 0 &&
-                      productsTotal >= FREE_DELIVERY_THRESHOLD && (
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="text-gray-600">{t('deliveryFee')}</span>
-                          <span className="font-semibold text-green-600">
-                            {t('free')}
-                          </span>
-                        </div>
-                      )} */}
+                   
                   </div>
 
                   {/* Total */}
@@ -1465,18 +1359,30 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
                         {t('total')}
                       </span>
                       <span className="text-2xl font-bold text-[#69429a]">
-                        {effectiveTotal} {t('currency')}
+                        {formatMoney(effectiveTotal)}
                       </span>
                     </div>
                   </div>
                 </div>
 
 
+                {ratesLoading && (
+                  <p className="text-xs text-gray-500" role="status">
+                    {t("currencyCursLoading")}
+                  </p>
+                )}
+                {ratesError && (
+                  <p className="text-xs text-red-500" role="alert">
+                    {t("currencyCursError")}
+                  </p>
+                )}
+
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleOrderClick}
-                  className="w-full text-center py-3 rounded-lg font-semibold shadow-md flex items-center justify-center gap-2 bg-[#69429a] hover:bg-[#7c4fb3] text-white"
+                  disabled={plnRate === null}
+                  className="disabled:opacity-50 disabled:cursor-not-allowed w-full text-center py-3 rounded-lg font-semibold shadow-md flex items-center justify-center gap-2 bg-[#69429a] hover:bg-[#7c4fb3] text-white"
                 >
                   <span>📱</span> {t('confirmOrder')}
                 </motion.button>

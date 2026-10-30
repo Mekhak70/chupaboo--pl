@@ -60,7 +60,7 @@ export function Footer() {
             <h3 className="text-lg font-semibold">{t("followUs")}</h3>
             <div className="flex gap-4">
               <a
-                href="https://www.instagram.com/chupabooo/"
+                href="https://www.instagram.com/chupaboo.pl/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-secondary-foreground transition-colors hover:bg-secondary/80"

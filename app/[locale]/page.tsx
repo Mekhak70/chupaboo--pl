@@ -1145,21 +1145,7 @@ ${type} ${creamType}։ ${t("imageLabel")} ${SITE_URL}${pendingImage.startsWith("
             <StaggerContainer className="flex flex-col gap-5 md:gap-8 max-w-5xl mx-auto">
               {/* Վերևի շարքը - 2 հատ */}
               <div className="grid md:grid-cols-2 gap-5 md:gap-8">
-                {/* <StaggerItem>
-                  <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#69429a]/30 group">
-                    <div className="flex items-start gap-3 md:gap-5">
-                      <div className="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-full bg-[#69429a]/10 flex items-center justify-center text-xl md:text-2xl group-hover:bg-[#69429a] group-hover:text-white transition-all duration-300">
-                        🚚
-                      </div>
-                      <div>
-                        <h3 className="text-lg md:text-xl font-bold text-gray-800 mb-1 md:mb-2">{t('freeDeliveryYerevanLabel')}</h3>
-                        <p className="text-sm md:text-base text-gray-600 leading-relaxed">
-                          {t('freeDeliveryYerevanDesc')}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </StaggerItem> */}
+         
 
                 <StaggerItem>
                   <div className="bg-white rounded-xl md:rounded-2xl p-4 md:p-6 shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-[#69429a]/30 group">

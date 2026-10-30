@@ -447,10 +447,10 @@ partyshop: {
   pl: "Party Shop"
 },
 selectDeliveryTime: {
-  hy: "Ընտրեք առաքման ժամը",
-  en: "Select delivery time",
-  ru: "Выберите время доставки",
-  pl: "Wybierz czas dostawy"
+  hy: "Ընտրեք վերցնելու ժամը",
+  en: "Select pickup time",
+  ru: "Выберите время самовывоза",
+  pl: "Wybierz godzinę odbioru"
 },
 "alreadyInCart": {
   "hy": "Ավելացված է զամբյուղում",
@@ -1473,6 +1473,24 @@ pieces: {
     en: "Custom design",
     ru: "Индивидуальный дизайн",
     pl: "Projekt niestandardowy"
+  },
+  currencyCurs: {
+    hy: "Արժույթ",
+    en: "Currency",
+    ru: "Валюта",
+    pl: "Waluta"
+  },
+  currencyCursLoading: {
+    hy: "Փոխարժեքը բեռնվում է…",
+    en: "Loading exchange rates…",
+    ru: "Загрузка курсов валют…",
+    pl: "Ładowanie kursów walut…"
+  },
+  currencyCursError: {
+    hy: "Փոխարժեքը չբեռնվեց։ Փորձեք թարմացնել էջը։",
+    en: "Failed to load exchange rates. Please refresh the page.",
+    ru: "Не удалось загрузить курсы валют. Обновите страницу.",
+    pl: "Nie udało się załadować kursów walut. Odśwież stronę."
   },
   broccoli: {
     hy: "Բռոկոլի",
