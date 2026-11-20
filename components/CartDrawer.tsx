@@ -1,8 +1,8 @@
 "use client";
 
-import { X, Minus, Plus, Trash2, ChevronDown, ChevronUp, Info, Truck, MapPin, Phone, Calendar, Clock, CreditCard, Home, ExternalLink } from "lucide-react";
+import { X, Minus, Plus, Trash2, Info, Truck, MapPin, Phone, Calendar, Clock, CreditCard, ShoppingCart, Store, Bike } from "lucide-react";
 import { useCart } from "@/components/cart-context";
-import { useLanguage } from "@/components/language-provider";
+import { cartItemCount, useLanguage } from "@/components/language-provider";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useCallback, useRef, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -83,10 +83,17 @@ interface TempOrderInfo {
   isCalculating: boolean;
 }
 
+function formatDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 function getMaxDate() {
   const maxDate = new Date();
   maxDate.setDate(maxDate.getDate() + 30);
-  return maxDate.toISOString().split("T")[0];
+  return formatDate(maxDate);
 }
 
 const calculateDeliveryFeeByDistance = (distanceInKm: number): number => {
@@ -120,14 +127,31 @@ const getDiscountPercentForPartyShop = (cakePrice: number): number => {
   return 0;
 };
 
+const fieldLabel = "mb-1 flex items-center gap-3 text-base font-bold leading-7 text-[#621296] sm:text-xl";
+const fieldInput = "min-h-[44px] w-full rounded-xl border border-[#bfc0c9] bg-white px-4 py-1.5 text-base text-gray-950 focus:border-[#8223c7] focus:outline-none focus:ring-1 focus:ring-[#8223c7] sm:text-lg";
+
 export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDrawerProps) {
-  const { cart, updateQuantity, removeFromCart, orderInfo: contextOrderInfo, clearCart } = useCart();
-  const { t } = useLanguage();
+  const { cart, updateQuantity, removeFromCart, orderInfo: contextOrderInfo, clearCart, getItemCount } = useCart();
+  const { t, language } = useLanguage();
   const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
-  const [isDeliveryExpanded, setIsDeliveryExpanded] = useState(false);
-  const [showDeliveryForm, setShowDeliveryForm] = useState(false);
+  const [detailsConfirmed, setDetailsConfirmed] = useState(false);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const phoneInputRef = useRef<HTMLInputElement>(null);
+  const timeInputRef = useRef<HTMLSelectElement>(null);
+  const orderButtonRef = useRef<HTMLButtonElement>(null);
+  const dateInputRef = useRef<HTMLInputElement>(null);
+  const dateEdited = useRef(false);
   const [showMessengerSelector, setShowMessengerSelector] = useState(false);
   const [errors, setErrors] = useState<ValidationErrors>({});
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const previousFocus = document.activeElement;
+    closeButtonRef.current?.focus();
+    return () => {
+      if (previousFocus instanceof HTMLElement) previousFocus.focus();
+    };
+  }, [isOpen]);
 
   // Convert AMD amounts for display only. Cart calculations remain in AMD.
   const [plnRate, setPlnRate] = useState<number | null>(null);
@@ -178,42 +202,25 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
     }).format(amountAMD * plnRate);
   };
 
-  const existingOrderInfo = contextOrderInfo || propOrderInfo;
+  const hasSavedOrder = Boolean(contextOrderInfo.phoneNumber || contextOrderInfo.deliveryAddress || contextOrderInfo.deliveryTime);
+  const existingOrderInfo = propOrderInfo ?? (hasSavedOrder ? contextOrderInfo : undefined);
 
-  console.log(cart, "cart");
-  const cartScrollRef = useRef<HTMLDivElement>(null);
 
   // ========== AVAILABLE CHECK ==========
   // Եթե զամբյուղում կա որևէ ապրանք ingredient-ով (Available բաժնից), ապա հնարավոր է նույն օրվա պատվեր
   const available = cart.some((item) => !!item.ingredient);
 
-  // ========== GET TODAY DATE (կախված available-ից) ==========
-  const getTodayDate = useCallback(() => {
-    const today = new Date();
-    if (available) {
-      return today.toISOString().split("T")[0];
-    } else {
-      today.setDate(today.getDate() + 1);
-      return today.toISOString().split("T")[0];
-    }
-  }, [available]);
-
-  // ========== GET MIN DATE (կախված available-ից) ==========
   const getMinDate = useCallback(() => {
-    const today = new Date();
-    if (available) {
-      return today.toISOString().split("T")[0];
-    } else {
-      today.setDate(today.getDate() + 1);
-      return today.toISOString().split("T")[0];
-    }
+    const date = new Date();
+    if (!available) date.setDate(date.getDate() + 1);
+    return formatDate(date);
   }, [available]);
 
   const [tempOrderInfo, setTempOrderInfo] = useState<TempOrderInfo>({
     phoneNumber: "",
-    deliveryOption: "delivery",
+    deliveryOption: "pickup",
     deliveryAddress: "",
-    deliveryDate: getTodayDate(),
+    deliveryDate: getMinDate(),
     deliveryTime: "",
     paymentMethod: "cash",
     deliveryFee: 0,
@@ -231,7 +238,7 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
         deliveryAddress: existingOrderInfo.deliveryAddress || prev.deliveryAddress,
         deliveryDate: existingOrderInfo.deliveryDate || prev.deliveryDate,
         deliveryTime: existingOrderInfo.deliveryTime || prev.deliveryTime,
-        paymentMethod: existingOrderInfo.paymentMethod || prev.paymentMethod,
+        paymentMethod: existingOrderInfo.deliveryOption === "delivery" ? "bankTransfer" : existingOrderInfo.paymentMethod || prev.paymentMethod,
         deliveryFee: existingOrderInfo.deliveryFee || prev.deliveryFee,
       }));
     }
@@ -241,9 +248,9 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
   useEffect(() => {
     setTempOrderInfo(prev => ({
       ...prev,
-      deliveryDate: getTodayDate(),
+      deliveryDate: (dateEdited.current || existingOrderInfo?.deliveryDate) && prev.deliveryDate >= getMinDate() ? prev.deliveryDate : getMinDate(),
     }));
-  }, [available, getTodayDate]);
+  }, [existingOrderInfo, getMinDate]);
 
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -497,82 +504,6 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
     return details;
   };
 
-  const formatDeliveryInfo = () => {
-    const info = tempOrderInfo;
-    if (!info) return null;
-
-    const details: { emoji: string; label: string; value: string }[] = [];
-
-    if (info.phoneNumber && info.phoneNumber.trim()) {
-      details.push({ emoji: "📞", label: t('phone') || "Հեռախոս", value: info.phoneNumber });
-    } else {
-      details.push({ emoji: "📞", label: t('phone') || "Հեռախոս", value: t('notSpecified') || "նշված չէ" });
-    }
-
-    const deliveryOptionMap: Record<string, string> = {
-      delivery: t('delivery') || "Առաքում",
-      pickup: t('pickup') || "Տեղում վերցնել",
-    };
-    details.push({
-      emoji: "🚚",
-      label: t('deliveryOption') || "Առաքման տարբերակ",
-      value: deliveryOptionMap[info.deliveryOption] || info.deliveryOption
-    });
-
-    if (info.deliveryOption === "delivery") {
-      if (info.deliveryAddress && info.deliveryAddress.trim()) {
-        details.push({ emoji: "📍", label: t('deliveryAddress') || "Առաքման հասցե", value: info.deliveryAddress });
-      } else {
-        details.push({ emoji: "📍", label: t('deliveryAddress') || "Առաքման հասցե", value: t('notSpecified') || "նշված չէ" });
-      }
-    } else {
-      details.push({ emoji: "🏠", label: t('pickupAddress') || "Վերցման կետ", value: PICKUP_ADDRESS });
-    }
-
-    if (info.deliveryDate) {
-      const formattedDate = info.deliveryDate.split("-").reverse().join(".");
-      details.push({ emoji: "📅", label: t('pickupDate') || "Առաքման ամսաթիվ", value: formattedDate });
-    } else {
-      details.push({ emoji: "📅", label: t('pickupDate') || "Առաքման ամսաթիվ", value: t('notSpecified') || "նշված չէ" });
-    }
-
-    if (info.deliveryTime && info.deliveryTime.trim()) {
-      details.push({ emoji: "⏰", label: t('preferredDeliveryTime') || "Նախընտրելի ժամ", value: info.deliveryTime });
-    } else {
-      details.push({ emoji: "⏰", label: t('preferredDeliveryTime') || "Նախընտրելի ժամ", value: t('notSpecified') || "նշված չէ" });
-    }
-
-    const paymentMap: Record<string, string> = {
-      cash: t('cash') || "Կանխիկ",
-      bankTransfer: t('bankTransfer') || "Բանկային փոխանցում",
-      CARD: "💳 " + (t('bankTransfer') || "Կարտով"),
-    };
-    if (info.paymentMethod) {
-      details.push({
-        emoji: "💳",
-        label: t('paymentMethod') || "Վճարման եղանակ",
-        value: paymentMap[info.paymentMethod] || info.paymentMethod
-      });
-    } else {
-      details.push({ emoji: "💳", label: t('paymentMethod') || "Վճարման եղանակ", value: t('notSpecified') || "նշված չէ" });
-    }
-
-    if (info.deliveryOption === "delivery" && info.deliveryFee > 0) {
-      details.push({
-        emoji: "💰",
-        label: t('deliveryFee') || "Առաքման վճար",
-        value: `${formatMoney(info.deliveryFee)}`
-      });
-    } else if (info.deliveryOption === "delivery" && info.deliveryFee === 0 && productsTotal >= FREE_DELIVERY_THRESHOLD) {
-      details.push({
-        emoji: "🎉",
-        label: t('deliveryFee') || "Առաքման վճար",
-        value: t('freeDelivery') || "Անվճար"
-      });
-    }
-
-    return details;
-  };
 
   const buildProductImagesLinks = (): string => {
     if (!cart || !Array.isArray(cart)) return '';
@@ -703,29 +634,17 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
     if (tempOrderInfo && tempOrderInfo.phoneNumber) {
       message += `\n🚚 *${t('customerDetails') || "հԱՃԱԽՈՐԴԻ ՏՎՅԱԼՆԵՐ"}*\n`;
       message += `▸ 📞 ${t('phone') || "Հեռախոս"}: ${tempOrderInfo.phoneNumber || t('notSpecified') || "նշված չէ"}\n`;
-      // const deliveryOptMap: Record<string, string> = {
-      //   delivery: t('delivery') || "Առաքում",
-      //   pickup: t('pickup') || "Տեղում վերցնել",
-      // };
-      // message += `▸ 🚚 ${t('deliveryOption') || "Առաքման տարբերակ"}: ${deliveryOptMap[tempOrderInfo.deliveryOption] || tempOrderInfo.deliveryOption}\n`;
-
-      // if (tempOrderInfo.deliveryOption === "delivery") {
-      //   message += `▸ 📍 ${t('deliveryAddress') || "Հասցե"}: ${tempOrderInfo.deliveryAddress || t('notSpecified') || "նշված չէ"}\n`;
-      //   if (tempOrderInfo.deliveryFee > 0) {
-      //     message += `▸ 💰 ${t('deliveryFee') || "Առաքման վճար"}: ${formatMoney(tempOrderInfo.deliveryFee)}\n`;
-      //   } else if (tempOrderInfo.deliveryFee === 0 && productsTotal >= FREE_DELIVERY_THRESHOLD) {
-      //     message += `▸ 💰 ${t('deliveryFee') || "Առաքման վճար"}: ${t('free') || "Անվճար"}\n`;
-      //   }
-      // } else {
-      //   message += `▸ 🏠 ${t('pickupAddress') || "Վերցման կետ"}: ${PICKUP_ADDRESS}\n`;
-      // }
+      const fulfillment = tempOrderInfo.deliveryOption === "pickup"
+        ? `${t("cartPickup")} · ${t("cartWarsawAddress")}`
+        : t("cartCourier");
+      message += `▸ 🚚 ${t("cartFulfillment")}: ${fulfillment}\n`;
 
       message += `▸ 📅 ${t('deliveryDate') || "Ամսաթիվ"}: ${tempOrderInfo.deliveryDate || t('notSpecified') || "նշված չէ"}\n`;
       message += `▸ ⏰ ${t('preferredDeliveryTime') || "Ժամ"}: ${tempOrderInfo.deliveryTime || t('notSpecified') || "նշված չէ"}\n`;
 
       const paymentMap: Record<string, string> = {
         cash: t('cash') || "Կանխիկ",
-        bankTransfer: t('bankTransfer') || "Բանկային փոխանցում",
+        bankTransfer: "BLIK",
         CARD: "💳 " + (t('bankTransfer') || "Կարտով"),
       };
       message += `▸ 💳 ${t('paymentMethod') || "Վճարման եղանակ"}: ${paymentMap[tempOrderInfo.paymentMethod] || tempOrderInfo.paymentMethod}\n`;
@@ -738,52 +657,40 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
     return message;
   };
 
+  const isTempOrderValid = () =>
+    Boolean(tempOrderInfo.phoneNumber.trim() && tempOrderInfo.deliveryDate && tempOrderInfo.deliveryTime);
+
   const handleOrderClick = () => {
-    const isPhoneValid = tempOrderInfo.phoneNumber.trim() !== "";
-    const isDateValid = tempOrderInfo.deliveryDate !== "";
-    // const isAddressValid = tempOrderInfo.deliveryOption === "pickup" || tempOrderInfo.deliveryAddress.trim() !== "";
-
-    if (isPhoneValid && isDateValid) {
-      setShowMessengerSelector(true);
-      setShowDeliveryForm(false);
-    } else {
-      setShowDeliveryForm(true);
-      setShowMessengerSelector(false);
+    if (!isTempOrderValid()) {
+      if (!tempOrderInfo.phoneNumber.trim()) phoneInputRef.current?.focus();
+      else if (!tempOrderInfo.deliveryDate) dateInputRef.current?.focus();
+      else timeInputRef.current?.focus();
+      return;
     }
-    setTimeout(() => {
-      const el = cartScrollRef.current;
-      if (el) {
-        el.scrollTo({
-          top: el.scrollHeight - el.clientHeight - 140,
-          behavior: "smooth",
-        });
-      }
-    }, 150);
-  };
-
-  const handleDeliveryFormSubmit = () => {
-    const isValid = tempOrderInfo.phoneNumber.trim() !== "" && tempOrderInfo.deliveryDate !== "";
-    if (isValid) {
-      setShowDeliveryForm(false);
-    }
+    setShowMessengerSelector(true);
   };
 
   const handleTempOrderChange = (field: keyof TempOrderInfo, value: string) => {
+    setDetailsConfirmed(false);
     setTempOrderInfo(prev => ({ ...prev, [field]: value }));
   };
 
-  const isTempOrderValid = () => {
-    const info = tempOrderInfo;
-    if (!info.phoneNumber.trim()) return false;
-    if (!info.deliveryDate) return false;
-    // if (info.deliveryOption === "delivery" && !info.deliveryAddress.trim()) return false;
-    return true;
+  const selectFulfillment = (deliveryOption: DeliveryOption) => {
+    setDetailsConfirmed(false);
+    setTempOrderInfo(prev => ({
+      ...prev,
+      deliveryOption,
+      deliveryAddress: "",
+      deliveryFee: 0,
+      distance: null,
+      paymentMethod: deliveryOption === "delivery" ? "bankTransfer" : prev.paymentMethod,
+    }));
   };
 
   const redirectToMessenger = async (
     platform: "whatsapp" | "telegram"
   ) => {
-    if (plnRate === null) return;
+    if (plnRate === null || !isTempOrderValid()) return;
 
     try {
       const orderId = `CH-${Date.now()}`;
@@ -856,7 +763,6 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
       );
     }
   };
-  const deliveryInfo = formatDeliveryInfo();
 
   const isAfter9PM = () => {
     const now = new Date();
@@ -869,68 +775,54 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
     // ✅ Եթե available-ը true է, ցույց տալ բոլոր 4 ժամային սլոտները (առանց սահմանափակումների)
     if (available) {
       return [
-        { value: "12:00-15:00", label: "12:00 - 15:00" },
-        { value: "15:00-18:00", label: "15:00 - 18:00" },
-        { value: "18:00-21:00", label: "18:00 - 21:00" },
-        { value: "21:00-24:00", label: "21:00 - 24:00" }
+        { value: "14:00-16:00", label: "14:00-16:00" },
+        { value: "16:00-18:00", label: "16:00-18:00" },
+        { value: "18:00-21:00", label: "18:00-21:00" },
       ];
     }
 
     const selectedDate = tempOrderInfo.deliveryDate;
-    const today = new Date().toISOString().split('T')[0];
+    const today = formatDate(new Date());
     const isToday = selectedDate === today;
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowDate = tomorrow.toISOString().split("T")[0];
+    const tomorrowDate = formatDate(tomorrow);
     const isTomorrow = selectedDate === tomorrowDate;
 
     // ✅ Եթե ընտրված է այսօր կամ վաղը և ժամը 21:00-ից հետո
     if ((isToday || isTomorrow) && isAfter9PM()) {
       return [
-        { value: "21:00-24:00", label: "21:00 - 24:00" }
+        { value: "18:00-21:00", label: "18:00-21:00" },
       ];
     }
     return [
-      { value: "12:00-15:00", label: "12:00 - 15:00" },
-      { value: "15:00-18:00", label: "15:00 - 18:00" },
-      { value: "18:00-21:00", label: "18:00 - 21:00" },
-      { value: "21:00-24:00", label: "21:00 - 24:00" }
+      { value: "14:00-16:00", label: "14:00-16:00" },
+      { value: "16:00-18:00", label: "16:00-18:00" },
+      { value: "18:00-21:00", label: "18:00-21:00" },
     ];
-  };
-
-  const formatDate = (date: Date) => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
   };
 
   // ========== HANDLE DATE CHANGE (հաշվի առնելով available-ը) ==========
   const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedDate = e.target.value;
-    const today = new Date();
-    let minDate: string;
-
-    if (available) {
-      minDate = today.toISOString().split("T")[0];
-    } else {
-      today.setDate(today.getDate() + 1);
-      minDate = today.toISOString().split("T")[0];
-    }
+    setDetailsConfirmed(false);
+    dateEdited.current = true;
+    const minDate = getMinDate();
 
     if (!selectedDate) {
-      setErrors(prev => ({ ...prev, deliveryDate: "Ընտրեք ամսաթիվ" }));
-      return;
-    }
-
-    if (selectedDate < minDate) {
-      setErrors(prev => ({ ...prev, deliveryDate: available ? "Ընտրեք այսօրվա կամ ավելի ուշ օր" : "Ընտրեք վաղվա կամ ավելի ուշ օր" }));
+      setErrors(prev => ({ ...prev, deliveryDate: t("cartDateRequired") }));
       setTempOrderInfo(prev => ({ ...prev, deliveryDate: "" }));
       return;
     }
 
-    setTempOrderInfo(prev => ({ ...prev, deliveryDate: selectedDate }));
+    if (selectedDate < minDate || selectedDate > getMaxDate()) {
+      setErrors(prev => ({ ...prev, deliveryDate: t("cartDateRange") }));
+      setTempOrderInfo(prev => ({ ...prev, deliveryDate: "" }));
+      return;
+    }
+
+    setTempOrderInfo(prev => ({ ...prev, deliveryDate: selectedDate, deliveryTime: "" }));
     clearFieldError("deliveryDate");
   };
 
@@ -959,7 +851,7 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 z-50 bg-black/50"
+            className="fixed inset-0 z-50 bg-[#191523]/55"
             onClick={onClose}
           />
 
@@ -968,20 +860,28 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 25, stiffness: 200 }}
-            className="fixed right-0 top-0 z-50 h-full w-full max-w-md bg-white shadow-xl flex flex-col"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="cart-drawer-title"
+            onKeyDown={(event) => {
+              if (event.key !== "Escape") return;
+              if (showMessengerSelector) setShowMessengerSelector(false);
+              else onClose();
+            }}
+            className="fixed right-0 top-0 z-50 flex h-dvh w-full flex-col overflow-hidden rounded-bl-xl bg-white shadow-xl sm:max-w-[660px]"
           >
-            <div className="flex justify-between items-center p-4 border-b bg-gradient-to-r from-[#69429a] to-[#8b5cf6]">
-              <h2 className="text-xl font-bold text-white">
-                🛒 {t('cart')} ({cart.length} {t('product')})
+            <div className="flex min-h-[79px] shrink-0 items-center justify-between gap-2 bg-gradient-to-r from-[#64269a] to-[#8448f2] px-4 sm:px-[26px]">
+              <h2 id="cart-drawer-title" className="flex items-center gap-3 text-xl font-bold text-white sm:text-[28px]">
+                <ShoppingCart className="size-8 shrink-0" aria-hidden="true" />
+                {t("cart")} ({cartItemCount(language, getItemCount())})
               </h2>
-              <button onClick={onClose} className="p-2 hover:bg-white/20 rounded-full transition-colors">
+              <button ref={closeButtonRef} type="button" onClick={onClose} aria-label={t("close")} className="p-2 hover:bg-white/20 rounded-full transition-colors">
                 <X className="h-5 w-5 text-white" />
               </button>
             </div>
 
             <div
-              ref={cartScrollRef}
-              className="flex-1 overflow-y-auto p-4 space-y-4"
+              className="flex-1 overflow-y-auto px-4 pb-[26px] sm:px-[26px]"
             >
               {cart.length === 0 ? (
                 <div className="text-center py-12">
@@ -1027,10 +927,10 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: idx * 0.05 }}
-                        className="border rounded-lg p-3 bg-white shadow-sm"
+                        className="mb-2.5 rounded-2xl border border-gray-200 bg-white px-4 pt-2 pb-3 shadow-sm"
                       >
                         <div className="flex gap-3">
-                          <div className="relative h-16 w-16 flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
+                          <div className="relative h-[92px] w-[92px] flex-shrink-0 rounded-lg overflow-hidden bg-gray-100">
                             <img
                               src={getDriveImageUrl(imageUrl)}
                               alt={String(item.name)}
@@ -1043,7 +943,7 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
                           <div className="flex-1">
                             <div className="flex items-center justify-between flex-wrap gap-2">
                               <div className="flex items-center gap-2">
-                                <h3 className="font-semibold text-gray-800 text-sm">{item.name}</h3>
+                                <h3 className="text-lg font-bold text-gray-950">{item.name}</h3>
                               
                               </div>
                             </div>
@@ -1055,19 +955,19 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
                                   <span className="text-xs text-gray-400 line-through">{formatMoney(originalPrice)}</span>
                                 </>
                               ) : (
-                                <span className="text-md font-bold text-[#69429a]">{formatMoney(effectivePrice)}</span>
+                                <span className="text-[23px] font-bold text-[#621296]">{formatMoney(effectivePrice)}</span>
                               )}
                             </div>
 
                             <div className="flex items-center gap-2 mt-2">
-                              <button onClick={() => updateQuantity(item.id, (item.quantity || 0) - 1, item.options)} className="border rounded-lg p-1 hover:bg-gray-100 transition">
+                              <button type="button" aria-label={t("cartDecreaseQuantity")} onClick={() => updateQuantity(item.id, (item.quantity || 0) - 1, item.options)} className="rounded-full border border-gray-200 p-1.5 hover:bg-gray-100 transition">
                                 <Minus className="h-3 w-3" />
                               </button>
                               <span className="w-8 text-center font-medium text-sm">{item.quantity}</span>
-                              <button onClick={() => updateQuantity(item.id, (item.quantity || 0) + 1, item.options)} className="border rounded-lg p-1 hover:bg-gray-100 transition">
+                              <button type="button" aria-label={t("cartIncreaseQuantity")} onClick={() => updateQuantity(item.id, (item.quantity || 0) + 1, item.options)} className="rounded-full border border-gray-200 p-1.5 hover:bg-gray-100 transition">
                                 <Plus className="h-3 w-3" />
                               </button>
-                              <button onClick={() => removeFromCart(item.id, item.options)} className="ml-auto text-red-500 hover:text-red-700 p-1 transition">
+                              <button type="button" aria-label={t("cartRemoveItem")} onClick={() => removeFromCart(item.id, item.options)} className="ml-auto text-red-500 hover:text-red-700 p-1 transition">
                                 <Trash2 className="h-4 w-4" />
                               </button>
                             </div>
@@ -1077,11 +977,13 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
                         {((isCake && itemCakeDetails && itemCakeDetails.length > 0) || item?.ingredient) && (
                           <>
                             <button
+                              type="button"
+                              aria-expanded={isExpanded}
                               onClick={() => toggleItemExpand(`${item.id}-${idx}`)}
-                              className="mt-2 text-xs text-[#69429a] hover:text-[#8b5cf6] flex items-center gap-1 transition"
+                              className="mt-2 flex items-center gap-2 text-sm font-semibold text-[#621296] transition hover:text-[#8b5cf6] sm:text-base"
                             >
                               <Info className="h-3 w-3" />
-                              {(isExpanded || item?.ingredient) ? t('closeDetails') : t('seeCakeComposition')}
+                              {isExpanded ? t('closeDetails') : t('seeCakeComposition')}
                             </button>
                             <AnimatePresence>
                               {isExpanded && (
@@ -1131,263 +1033,100 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
                     );
                   })}
 
-                  {deliveryInfo && deliveryInfo.length > 0 && !showDeliveryForm && tempOrderInfo.deliveryAddress && (
-                    <div className="border rounded-lg p-3 bg-white shadow-sm">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <Truck className="h-4 w-4 text-[#69429a]" />
-                          <h3 className="font-semibold text-gray-800 text-sm">{t('customerDetails')}</h3>
-                        </div>
-                        <button
-                          onClick={() => setIsDeliveryExpanded(!isDeliveryExpanded)}
-                          className="text-xs text-[#69429a] hover:text-[#8b5cf6] flex items-center gap-1 transition"
-                        >
-                          {isDeliveryExpanded ? (
-                            <>{t('close')} <ChevronUp className="h-3 w-3" /></>
-                          ) : (
-                            <>{t('seeMore')} <ChevronDown className="h-3 w-3" /></>
-                          )}
+                  <div className="space-y-2">
+                    <div>
+                      <label htmlFor="cart-phone" className={fieldLabel}>
+                        <Phone className="size-6" /> {t("phoneNumber")}
+                      </label>
+                      <input
+                        id="cart-phone"
+                        ref={phoneInputRef}
+                        type="tel"
+                        autoComplete="tel"
+                        value={tempOrderInfo.phoneNumber}
+                        onChange={(event) => handleTempOrderChange("phoneNumber", event.target.value)}
+                        placeholder={t("enterPhoneNumber")}
+                        className={fieldInput}
+                        required
+                      />
+                    </div>
+
+                    <fieldset className="space-y-2">
+                      <legend className={fieldLabel}><Truck className="size-6" /> {t("cartFulfillment")}</legend>
+                      {(["pickup", "delivery"] as const).map((option) => {
+                        const pickup = option === "pickup";
+                        const Icon = pickup ? Store : Bike;
+                        const selected = tempOrderInfo.deliveryOption === option;
+                        return (
+                          <label key={option} className={`flex min-h-[94px] cursor-pointer items-start gap-3 rounded-2xl border px-3 py-2 shadow-sm sm:gap-8 sm:px-7 ${selected ? "border-[#8a31cf] bg-[#f0e6fb]" : "border-gray-200 bg-[#f6f6fb]"}`}>
+                            <Icon className="size-10 shrink-0 self-center text-[#6819a0]" aria-hidden="true" />
+                            <span className="min-w-0 flex-1 leading-snug text-gray-950">
+                              <span className="block text-lg font-bold">{t(pickup ? "cartPickup" : "cartCourier")}</span>
+                              <span className="block text-sm sm:text-base">{t(pickup ? "cartPickupHint" : "cartCourierHint")}</span>
+                              <span className={`flex items-center gap-1 text-sm ${pickup ? "font-bold text-[#621296]" : ""}`}>
+                                {pickup && <MapPin className="size-4 shrink-0" aria-hidden="true" />}
+                                {t(pickup ? "cartWarsawAddress" : "cartCourierInstructions")}
+                              </span>
+                            </span>
+                            <input type="radio" name="cart-fulfillment" checked={selected} onChange={() => selectFulfillment(option)} className="mt-1 size-5 shrink-0 accent-[#7d24be]" />
+                          </label>
+                        );
+                      })}
+                    </fieldset>
+
+                    <fieldset>
+                      <legend className={fieldLabel}><CreditCard className="size-6" /> {t("paymentMethod")}</legend>
+                      <div className="flex flex-wrap gap-2">
+                        <button type="button" disabled={tempOrderInfo.deliveryOption === "delivery"} aria-pressed={tempOrderInfo.paymentMethod === "cash"} onClick={() => handleTempOrderChange("paymentMethod", "cash")} className="min-h-12 min-w-[138px] rounded-full border border-[#00b678] px-4 font-semibold text-[#008258] aria-pressed:bg-[#00a96e] aria-pressed:text-white disabled:opacity-40 sm:min-w-[178px]">
+                          💵 {t("cash")}
+                        </button>
+                        <button type="button" aria-pressed={tempOrderInfo.paymentMethod === "bankTransfer"} onClick={() => handleTempOrderChange("paymentMethod", "bankTransfer")} className="min-h-12 min-w-[138px] rounded-full border border-[#8223c7] px-4 font-bold text-[#621296] aria-pressed:bg-[#7425ac] aria-pressed:text-white sm:min-w-[178px]">
+                          <span aria-hidden="true" className="mr-2 inline-flex size-6 items-center justify-center rounded bg-black text-white">b</span> BLIK
                         </button>
                       </div>
+                      <div className="mt-3 flex items-center gap-4 rounded-2xl bg-[#efe6f7] px-4 py-2 text-gray-950">
+                        <Info className="size-6 shrink-0 text-[#621296]" aria-hidden="true" />
+                        <ul className="list-disc pl-4 text-sm leading-tight">
+                          <li>{t("cartPickupPayment")}</li>
+                          <li>{t("cartCourierPayment")}</li>
+                          <li>{t("cartCourierHandoff")}</li>
+                        </ul>
+                      </div>
+                    </fieldset>
 
-                      <AnimatePresence>
-                        {isDeliveryExpanded && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            exit={{ height: 0, opacity: 0 }}
-                            transition={{ duration: 0.3 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="mt-3 p-3 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border border-blue-100">
-                              {/* <div className="text-xs font-semibold text-blue-700 uppercase tracking-wide mb-2">🚚 {t('deliveryDetail')}</div> */}
-                              <div className="space-y-1.5">
-                                {deliveryInfo.map((detail, i) => (
-                                  <div key={i} className="flex items-start gap-2 text-xs">
-                                    <span className="text-sm">{detail.emoji}</span>
-                                    <div>
-                                      <span className="font-medium text-gray-700">{detail.label}:</span>
-                                      <span className="text-gray-600 ml-1">{detail.value}</span>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-
-                      {!isDeliveryExpanded && deliveryInfo[0] && (
-                        <div className="mt-2 text-xs text-gray-500 flex items-center gap-2 flex-wrap">
-                          <span>{deliveryInfo[0].emoji}</span>
-                          <span>{deliveryInfo[0].value}</span>
-                          {deliveryInfo[1] && (
-                            <>
-                              <span className="text-gray-300">|</span>
-                              <span>{deliveryInfo[1].emoji}</span>
-                              <span>{deliveryInfo[1].value}</span>
-                            </>
-                          )}
-                        </div>
-                      )}
+                    <div>
+                      <label htmlFor="cart-date" className={fieldLabel}><Calendar className="size-6" /> {t("pickupDate")}</label>
+                      <input id="cart-date" ref={dateInputRef} type="date" lang={language} value={tempOrderInfo.deliveryDate} onChange={handleDateChange} min={getMinDate()} max={getMaxDate()} className={fieldInput} required />
+                      {errors.deliveryDate && <p className="mt-1 text-sm text-red-600" role="alert">{errors.deliveryDate}</p>}
                     </div>
-                  )}
 
-                  <AnimatePresence>
-                    {showDeliveryForm && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 20 }}
-                        className="space-y-5"
-                      >
-                       
-                        <div>
-                          <p className="text-lg font-semibold text-[#69429a] mb-3 flex items-center gap-2">
-                            <Phone className="w-5 h-5" />
-                            {t('phoneNumber')}
-                          </p>
-                          <input
-                            type="tel"
-                            value={tempOrderInfo.phoneNumber}
-                            onChange={(e) => handleTempOrderChange("phoneNumber", e.target.value)}
-                            placeholder={t('enterPhoneNumber') || "+374 XX XX XX XX"}
-                            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#69429a] focus:ring-1 focus:ring-[#69429a] border-gray-300"
-                            required
-                          />
-                        </div>
+                    <div>
+                      <label htmlFor="cart-time" className={fieldLabel}><Clock className="size-6" /> {t("preferredDeliveryTime")}</label>
+                      <select id="cart-time" ref={timeInputRef} value={tempOrderInfo.deliveryTime} onChange={(event) => handleTempOrderChange("deliveryTime", event.target.value)} className={fieldInput} required>
+                        <option value="">{t("selectDeliveryTime")}</option>
+                        {getAvailableTimeSlots().map((slot) => <option key={slot.value} value={slot.value}>{slot.label}</option>)}
+                      </select>
+                    </div>
 
-                        {/* Delivery Date */}
-                        <div>
-                          <p className="text-lg font-semibold text-[#69429a] mb-3 flex items-center gap-2">
-                            <Calendar className="w-5 h-5" />
-                            {t('pickupDate')}
-                          </p>
-                          <input
-                            type="date"
-                            value={tempOrderInfo.deliveryDate}
-                            onChange={handleDateChange}
-                            min={getMinDate()}
-                            max={getMaxDate()}
-                            className="w-full h-10 px-3 text-sm appearance-none bg-white border rounded-lg focus:outline-none focus:border-[#69429a] focus:ring-1 focus:ring-[#69429a] border-gray-300"
-                            required
-                          />
-                          {errors.deliveryDate && <p className="text-red-500 text-sm mt-2">{errors.deliveryDate}</p>}
-                        </div>
+                    <button type="button" disabled={!isTempOrderValid() || detailsConfirmed} onClick={() => { setDetailsConfirmed(true); orderButtonRef.current?.focus(); }} className="mt-2 min-h-[54px] w-full rounded-2xl bg-[#7024a8] px-4 text-lg font-semibold text-white disabled:bg-[#d9dce4] disabled:text-gray-800">
+                      ✅ {t(detailsConfirmed ? "cartDetailsConfirmed" : "confirmAndContinue")}
+                    </button>
+                  </div>
 
-                        {/* Delivery Time */}
-                        <div>
-                          <p className="text-lg font-semibold text-[#69429a] mb-3 flex items-center gap-2">
-                            <Clock className="w-5 h-5" />
-                            {t('preferredDeliveryTime')}
-                          </p>
-                          <select
-                            value={tempOrderInfo.deliveryTime}
-                            onChange={(e) => {
-                              handleTempOrderChange("deliveryTime", e.target.value);
-                              if (e.target.value) clearFieldError("deliveryTime");
-                            }}
-                            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-[#69429a] focus:ring-1 focus:ring-[#69429a] border-gray-300"
-                          >
-                            <option value="">{t('selectDeliveryTime')}</option>
-                            {getAvailableTimeSlots().map((slot) => (
-                              <option key={slot.value} value={slot.value}>
-                                {slot.label}
-                              </option>
-                            ))}
-                          </select>
-                          {errors.deliveryTime && <p className="text-red-500 text-sm mt-2">{errors.deliveryTime}</p>}
-                        </div>
-
-                        {/* Payment Method */}
-                        <div>
-                          <p className="text-lg font-semibold text-[#69429a] mb-3 flex items-center gap-2">
-                            <CreditCard className="w-5 h-5" />
-                            {t('paymentMethod')}
-                          </p>
-                          <div className="flex flex-wrap gap-3">
-                            <button
-                              onClick={() => handleTempOrderChange("paymentMethod", "cash")}
-                              className={`px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 border cursor-pointer transition-all ${tempOrderInfo.paymentMethod === "cash"
-                                ? "bg-[#10b981] text-white border-[#10b981] shadow-md scale-105"
-                                : "bg-white text-[#10b981] border-[#10b981] hover:bg-[#d1fae5]"
-                                }`}
-                            >
-                              💵 {t('cash')}
-                            </button>
-                            <button
-                              onClick={() => handleTempOrderChange("paymentMethod", "bankTransfer")}
-                              className={`px-4 py-2 rounded-full text-sm font-medium flex items-center gap-2 border cursor-pointer transition-all ${tempOrderInfo.paymentMethod === "bankTransfer"
-                                ? "bg-[#8b5cf6] text-white border-[#8b5cf6] shadow-md scale-105"
-                                : "bg-white text-[#8b5cf6] border-[#8b5cf6] hover:bg-[#ede9fe]"
-                                }`}
-                            >
-                              🏦 {t('bankTransfer')}
-                            </button>
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={handleDeliveryFormSubmit}
-                          disabled={!isTempOrderValid()}
-                          className={`w-full py-3 rounded-lg text-white font-semibold transition ${isTempOrderValid()
-                            ? "bg-[#69429a] hover:bg-[#7c4fb3]"
-                            : "bg-gray-300 cursor-not-allowed"
-                            }`}
-                        >
-                          ✅ {t('confirmAndContinue')}
-                        </button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                  <div className="mt-5 space-y-3 border-t border-gray-200 pt-3">
+                    <div className="flex items-center justify-between gap-3 px-1 py-2">
+                      <span className="text-xl font-bold text-gray-900">{t("total")}</span>
+                      <span className="text-3xl font-extrabold text-[#60128c] sm:text-4xl">{formatMoney(effectiveTotal)}</span>
+                    </div>
+                    {ratesLoading && <p className="text-xs text-gray-500" role="status">{t("currencyCursLoading")}</p>}
+                    {ratesError && <p className="text-xs text-red-500" role="alert">{t("currencyCursError")}</p>}
+                    <button ref={orderButtonRef} type="button" onClick={handleOrderClick} disabled={plnRate === null} className="flex min-h-[70px] w-full items-center justify-center gap-3 rounded-2xl bg-[#662399] px-4 text-lg font-semibold text-white shadow-md transition hover:bg-[#762eb2] disabled:opacity-50 sm:text-xl">
+                      <span aria-hidden="true">📱</span> {t("confirmOrder")}
+                    </button>
+                  </div>
                 </>
               )}
             </div>
-
-            {cart.length > 0 && (
-              <motion.div
-                initial={{ y: 50, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.1 }}
-                className="border-t p-4 space-y-3 bg-gray-50"
-              >
-                {/* {hasCakeInCart && discountInfo && discountInfo.discountPercent > 0 && (
-                  <div className="bg-green-50 border border-green-200 rounded-lg p-2 text-center">
-                    <p className="text-xs text-green-700">
-                      🎉 {discountInfo.discountPercent}% {t('discountOnPartyShop') || 'զեղչ PartyShop-ի համար'}
-                      {discountInfo.discountPercent === 10
-                        ? ` (${formatMoney(5000)}–${formatMoney(10000)})`
-                        : ` (${formatMoney(10000)}+)`}
-                    </p>
-                  </div>
-                )} */}
-
-
-                <div className="space-y-3">
-                  {/* Pickup address */}
-                  <div className="flex items-start gap-3 rounded-xl border border-[#69429a]/15 bg-[#69429a]/5 p-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#69429a]/10">
-                      <MapPin size={18} className="text-[#69429a]" />
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <p className="text-xs font-semibold text-gray-800">
-                        {t('pickupLocationTitle')}
-                      </p>
-
-                      <a
-                        href="https://www.google.com/maps/search/?api=1&query=Odkryta%2015%2C%2003-140%20Warszawa%2C%20Poland"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-1 inline-block text-xs leading-relaxed text-[#69429a] underline decoration-[#69429a]/40 underline-offset-2 hover:text-[#513078] transition-colors"
-                      >
-                        Odkryta 15, 03-140 Warszawa, Poland
-                        <ExternalLink size={12} className="ml-1 inline-block" />
-                      </a>
-                    </div>
-                  </div>
-
-                  {/* Price details */}
-                  <div className="space-y-2.5 px-1">
-                   
-                  </div>
-
-                  {/* Total */}
-                  <div className="border-t border-gray-200 pt-3 mt-3">
-                    <div className="flex justify-between items-center rounded-xl bg-gray-50 px-3 py-3">
-                      <span className="font-semibold text-gray-700">
-                        {t('total')}
-                      </span>
-                      <span className="text-2xl font-bold text-[#69429a]">
-                        {formatMoney(effectiveTotal)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-
-                {ratesLoading && (
-                  <p className="text-xs text-gray-500" role="status">
-                    {t("currencyCursLoading")}
-                  </p>
-                )}
-                {ratesError && (
-                  <p className="text-xs text-red-500" role="alert">
-                    {t("currencyCursError")}
-                  </p>
-                )}
-
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleOrderClick}
-                  disabled={plnRate === null}
-                  className="disabled:opacity-50 disabled:cursor-not-allowed w-full text-center py-3 rounded-lg font-semibold shadow-md flex items-center justify-center gap-2 bg-[#69429a] hover:bg-[#7c4fb3] text-white"
-                >
-                  <span>📱</span> {t('confirmOrder')}
-                </motion.button>
-              </motion.div>
-            )}
 
             <AnimatePresence>
               {showMessengerSelector && (

@@ -5,6 +5,19 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 
 type Language = "hy" | "en" | "ru" | "pl"
 
+const cartItemLabels: Record<Language, Record<string, string>> = {
+  hy: { one: "ապրանք", other: "ապրանք" },
+  en: { one: "item", other: "items" },
+  ru: { one: "товар", few: "товара", many: "товаров", other: "товара" },
+  pl: { one: "produkt", few: "produkty", many: "produktów", other: "produktu" },
+}
+
+export function cartItemCount(language: Language, count: number) {
+  const labels = cartItemLabels[language]
+  const category = new Intl.PluralRules(language).select(count)
+  return `${count} ${labels[category] ?? labels.other}`
+}
+
 type Translations = {
   [key: string]: {
     hy: string | any
@@ -15,6 +28,23 @@ type Translations = {
 }
 
 export const translations: Translations = {
+  cartFulfillment: { hy: "Պատվերի ստացման եղանակ", en: "Order fulfillment", ru: "Способ получения заказа", pl: "Sposób odbioru zamówienia" },
+  cartPickup: { hy: "Անձամբ վերցնել", en: "Pick up in person", ru: "Самовывоз", pl: "Odbiór osobisty" },
+  cartPickupHint: { hy: "Ստացեք պատվերը հետևյալ հասցեով՝", en: "Collect your order at", ru: "Заберите заказ по адресу", pl: "Odbierz zamówienie pod adresem" },
+  cartWarsawAddress: { hy: "Օդկրիտա 15, Վարշավա", en: "Odkryta 15, Warsaw", ru: "Открыта 15, Варшава", pl: "Odkryta 15, Warszawa" },
+  cartCourier: { hy: "Առաքում սուրհանդակով", en: "Courier delivery", ru: "Доставка курьером", pl: "Dostawa kurierem" },
+  cartCourierHint: { hy: "Սեփական առաքում չունենք։", en: "We don’t offer in-house delivery.", ru: "У нас нет собственной доставки.", pl: "Nie mamy własnej dostawy." },
+  cartCourierInstructions: { hy: "Պատվիրեք առաքում մեր գործընկերների միջոցով։", en: "Arrange delivery through our partners.", ru: "Закажите доставку через наших партнёров.", pl: "Zamów dostawę u naszych partnerów." },
+  cartPickupPayment: { hy: "Անձամբ վերցնելիս կարող եք վճարել կանխիկ կամ BLIK-ով։", en: "For pickup, pay with cash or BLIK.", ru: "При самовывозе можно оплатить наличными или через BLIK.", pl: "Przy odbiorze osobistym zapłać gotówką lub BLIKIEM." },
+  cartCourierPayment: { hy: "Սուրհանդակով առաքման դեպքում առցանց վճարեք BLIK-ով։", en: "For courier delivery, pay online with BLIK.", ru: "При доставке курьером оплатите заказ онлайн через BLIK.", pl: "Przy dostawie kurierem zapłać online BLIKIEM." },
+  cartCourierHandoff: { hy: "Վճարումը հաստատելուց հետո պատվերը փոխանցվում է սուրհանդակին։", en: "We hand the order to the courier once payment is confirmed.", ru: "После подтверждения оплаты мы передаём заказ курьеру.", pl: "Po potwierdzeniu płatności przekażemy zamówienie kurierowi." },
+  cartDetailsConfirmed: { hy: "Տվյալները հաստատված են", en: "Details confirmed", ru: "Данные подтверждены", pl: "Dane potwierdzone" },
+  cartDateRequired: { hy: "Ընտրեք ամսաթիվը։", en: "Select a date.", ru: "Выберите дату.", pl: "Wybierz datę." },
+  cartDateRange: { hy: "Ընտրեք հասանելի ամսաթիվ։", en: "Select an available date.", ru: "Выберите доступную дату.", pl: "Wybierz dostępną datę." },
+  cartDecreaseQuantity: { hy: "Նվազեցնել քանակը", en: "Decrease quantity", ru: "Уменьшить количество", pl: "Zmniejsz ilość" },
+  cartIncreaseQuantity: { hy: "Ավելացնել քանակը", en: "Increase quantity", ru: "Увеличить количество", pl: "Zwiększ ilość" },
+  cartRemoveItem: { hy: "Հեռացնել ապրանքը", en: "Remove item", ru: "Удалить товар", pl: "Usuń produkt" },
+
   // Navigation
   home: { hy: "Գլխավոր", en: "Home", ru: "Главная", pl: "Strona główna" },
   about: { hy: "Մեր մասին", en: "About", ru: "О нас", pl: "O nas" },
