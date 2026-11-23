@@ -5,6 +5,8 @@ const withAnalyzer = withBundleAnalyzer({
   enabled: process.env.ANALYZE === "true",
 });
 
+const polandStorageUrl = process.env.NEXT_PUBLIC_POLAND_SUPABASE_URL;
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   compress: true,
@@ -14,6 +16,7 @@ const nextConfig: NextConfig = {
   },
   images: {
     remotePatterns: [
+      ...(polandStorageUrl ? [new URL("/storage/v1/object/public/**", polandStorageUrl)] : []),
       {
         protocol: "https",
         hostname: "chupaboo.com",

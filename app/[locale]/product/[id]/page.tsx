@@ -1,5 +1,8 @@
 "use client";
 
+import ManagedCakePage from "@/components/managed-cake-page";
+import { polandCatalogEnabled } from "@/lib/poland-supabase";
+
 import { use, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -66,7 +69,12 @@ type SheetRow = Record<string, unknown>;
 
 // ========== COMPONENT ==========
 
-export default function ProductPage({
+export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
+  if (polandCatalogEnabled) return <ManagedCakePage params={params} />;
+  return <LegacyProductPage params={params} />;
+}
+
+function LegacyProductPage({
   params,
 }: {
   params: Promise<{ id: string }>;

@@ -561,7 +561,18 @@ export function CartDrawer({ isOpen, onClose, orderInfo: propOrderInfo }: CartDr
       }
 
       message += `▸ ${item.name} — ${item.quantity} ${t('quantity') || "հատ"} — ${formatMoney(finalPrice * item.quantity)}\n`;
-      if (isCake && item.options) {
+      if (Array.isArray(item.options?.donuts)) {
+        for (const [index, donut] of item.options.donuts.entries()) {
+          const composition = [
+            donut.donutVariantName,
+            t(donut.cakeType),
+            donut.selectedAnimal && t(donut.selectedAnimal),
+            ...(donut.selectedVegetables ?? []).map((key: string) => t(key)),
+            donut.creamType && t(donut.creamType),
+          ].filter(Boolean);
+          message += `   🍩 ${index + 1}. ${composition.join(", ")}\n`;
+        }
+      } else if (isCake && item.options) {
         if (item.options.cakeType) {
           const typeMap: Record<string, string> = {
             meat: t('MEAT'),

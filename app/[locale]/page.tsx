@@ -1,6 +1,9 @@
 "use client";
 
 import Image from "next/image";
+import { getCatalogCakes } from "@/lib/catalog-cakes";
+import { calculateCatalogCakeStartingPrice } from "@/lib/cake-config";
+import { polandCatalogEnabled, polandSupabase } from "@/lib/poland-supabase";
 import { Heart, Shield, Sparkles, PawPrint, Truck, Palette, X, ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import { useLanguage } from "@/components/language-provider";
 import { useMemo, useState, useEffect, useRef, useCallback } from "react";
@@ -75,6 +78,15 @@ const getHeroSlides = () => [
     bgColor: "",
   },
 ];
+
+type HomepageContent = {
+  id: string;
+  kind: "slide" | "faq";
+  title: string;
+  answer: string;
+  desktop_path: string | null;
+  mobile_path: string | null;
+};
 
 const PLACEHOLDER_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect width='400' height='400' fill='%23f3f4f6'/%3E%3Ctext x='200' y='200' font-family='Arial' font-size='16' fill='%239ca3af' text-anchor='middle' dy='.3em'%3ENo Image%3C/text%3E%3C/svg%3E";
 
@@ -254,7 +266,36 @@ export default function HomePage() {
   }, []);
 
   // Get responsive hero slides
-  const heroSlides = useMemo(() => getHeroSlides(), []);
+  const [homepageContent, setHomepageContent] = useState<HomepageContent[]>([]);
+  useEffect(() => {
+    if (!polandCatalogEnabled) return;
+    const controller = new AbortController();
+    void (async () => {
+      const { data, error } = await polandSupabase.from("homepage_content")
+        .select("id,kind,title,answer,desktop_path,mobile_path")
+        .eq("language", language).eq("is_active", true)
+        .order("sort_order").order("id").abortSignal(controller.signal);
+      if (!controller.signal.aborted) {
+        setHomepageContent(error ? [] : (data ?? []) as HomepageContent[]);
+        setCurrentSlide(0);
+      }
+    })();
+    return () => controller.abort();
+  }, [language]);
+
+  const heroSlides = useMemo(() => {
+    const slides = homepageContent.filter((row) => row.kind === "slide" && row.desktop_path);
+    if (slides.length === 0) return getHeroSlides();
+    const bucket = polandSupabase.storage.from("homepage-images");
+    return slides.map((slide) => ({
+      ...getHeroSlides()[0],
+      id: slide.id,
+      title: slide.title,
+      imageDesktop: bucket.getPublicUrl(slide.desktop_path!).data.publicUrl,
+      imageMobile: bucket.getPublicUrl(slide.mobile_path ?? slide.desktop_path!).data.publicUrl,
+    }));
+  }, [homepageContent]);
+  const managedFaqs = homepageContent.filter((row) => row.kind === "faq");
   const floatingImages = useMemo(() => getFloatingImages(), []);
 
   // ADS
@@ -551,9 +592,12 @@ ${type} ${creamType}։ ${t("imageLabel")} ${SITE_URL}${pendingImage.startsWith("
             "https://opensheet.elk.sh/1F6YoFIrbrIbKgItyWZZnF60wWKImkq_g-fUFJ7vJ9a8/Sheet1"
           ),
   
-          fetch(
-            "https://opensheet.elk.sh/1MWGxhTUXdrzb9HXG6AedHV1bPRWAFQWQVUuan_K-Df8/Sheet1"
-          ),
+          polandCatalogEnabled
+            ? getCatalogCakes().then((cakes) => Response.json(cakes.filter((cake) => cake.isFeatured).map((cake) => ({
+                ...cake,
+                price: calculateCatalogCakeStartingPrice(cake),
+              }))))
+            : fetch("https://opensheet.elk.sh/1MWGxhTUXdrzb9HXG6AedHV1bPRWAFQWQVUuan_K-Df8/Sheet1"),
   
           fetch(
           "https://opensheet.elk.sh/1f-tS40p_iKXLckAwjua5HMX-fIcN97fj54V9BNzOetE/1"
@@ -1142,6 +1186,18 @@ ${type} ${creamType}։ ${t("imageLabel")} ${SITE_URL}${pendingImage.startsWith("
               </div>
             </ScrollReveal>
 
+            {managedFaqs.length > 0 ? (
+              <StaggerContainer className="mx-auto grid max-w-5xl gap-5 md:grid-cols-2 md:gap-8">
+                {managedFaqs.map((faq) => (
+                  <StaggerItem key={faq.id}>
+                    <article className="h-full rounded-2xl bg-white p-6 shadow-md">
+                      <h3 className="text-lg font-bold text-[#69429a]">{faq.title}</h3>
+                      <p className="mt-2 whitespace-pre-line text-gray-600">{faq.answer}</p>
+                    </article>
+                  </StaggerItem>
+                ))}
+              </StaggerContainer>
+            ) : (
             <StaggerContainer className="flex flex-col gap-5 md:gap-8 max-w-5xl mx-auto">
               {/* Վերևի շարքը - 2 հատ */}
               <div className="grid md:grid-cols-2 gap-5 md:gap-8">
@@ -1219,6 +1275,7 @@ ${type} ${creamType}։ ${t("imageLabel")} ${SITE_URL}${pendingImage.startsWith("
                 </StaggerItem>
               </div>
             </StaggerContainer>
+            )}
 
             <ScrollReveal direction="up" delay={0.4}>
               <div className="text-center mt-8 md:mt-12">

@@ -1,5 +1,8 @@
 "use client"
 
+import { getCatalogCakes } from "@/lib/catalog-cakes"
+import { calculateCatalogCakeStartingPrice } from "@/lib/cake-config"
+import { polandCatalogEnabled } from "@/lib/poland-supabase"
 import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -164,6 +167,11 @@ export default function ShopPage() {
     async function loadProducts() {
       try {
         setLoading(true);
+        if (polandCatalogEnabled) {
+          const cakes = await getCatalogCakes();
+          setProducts(cakes.map((cake) => ({ ...cake, price: calculateCatalogCakeStartingPrice(cake), stock: 999 })));
+          return;
+        }
         const res = await fetch(
           "https://opensheet.elk.sh/1MWGxhTUXdrzb9HXG6AedHV1bPRWAFQWQVUuan_K-Df8/Sheet1"
         );
