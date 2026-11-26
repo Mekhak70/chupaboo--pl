@@ -48,7 +48,7 @@ export default function AboutPage() {
       {/* Video Hero */}
       <div className="flex items-center justify-center w-full" style={{ backgroundColor: 'rgb(105, 66, 154)' }}>
         <video
-          src="/about.mov"
+          src="/about.mp4"
           autoPlay
           muted
           loop

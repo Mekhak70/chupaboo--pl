@@ -9,7 +9,7 @@ import 'swiper/css/pagination';
 const videos = [
   { src: '/betik.mov', delay: 18000 },
   { src: '/copy_8823C844-0841-4036-8E6E-9CBC9F0CE4E5.mov', delay: 22000 },
-  { src: '/Mona.mov', delay: 22000 },
+  { src: '/Mona.mp4', delay: 22000 },
 ];
 
 export default function PetSlider() {
